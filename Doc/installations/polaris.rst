@@ -13,7 +13,7 @@ Polaris is a GPU-accelerated supercomputer located at Argonne National Laborator
 Building WEST
 ~~~~~~~~~~~~~
 
-WEST executables can be compiled using the following script (tested on May 8, 2024):
+WEST executables can be compiled using the following script (tested on April 28, 2025):
 
 .. code-block:: bash
 
@@ -56,12 +56,6 @@ Running WEST Jobs
 
 The following is an example executable script `run_west.sh` to run the `wstat.x` WEST executable on two nodes of Polaris with 4 MPI ranks and 4 GPUs per node. The <project_name> must be replaced with an active project allocation.
 
-**Important**: The following environment variable is needed to work around a bug in ROMIO, Cray MPICH.
-
-.. code-block:: bash
-
-   export ROMIO_FSTYPE_FORCE="ufs:"
-
 **Important**: It is recommended to run the calculation from one of the Lustre file systems (`/grand` or `/eagle` instead of `/home`).
 
 .. code-block:: bash
@@ -83,7 +77,6 @@ The following is an example executable script `run_west.sh` to run the `wstat.x`
    module load cray-python/3.11.5
 
    export MPICH_GPU_SUPPORT_ENABLED=1
-   export ROMIO_FSTYPE_FORCE="ufs:"
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_PATH/lib
 
    NNODES=`wc -l < $PBS_NODEFILE`

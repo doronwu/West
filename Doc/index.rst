@@ -47,7 +47,7 @@ Contents
 
 .. note::
 
-   To get help using the **WEST** package, send an email to `mgovoni@anl.gov <mailto:mgovoni@anl.gov>`_.
+   To get help using the **WEST** package, send an email to `mgovoni@unimore.it <mailto:mgovoni@unimore.it>`_.
 
 The **WEST** package is hosted on `GitHub <https://github.com/west-code-development/West>`_ and licensed under the open-source GPLv3 license.
 
