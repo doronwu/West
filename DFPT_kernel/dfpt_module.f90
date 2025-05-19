@@ -95,9 +95,8 @@ MODULE dfpt_module
       !
       COMPLEX(DP), PARAMETER :: zero = (0._DP,0._DP)
       !
-      IF (l_frac_occ .AND. .NOT. gamma_only) THEN
-         CALL errore('dfpt', 'fraction occupation only implemented for gamma-only case', 1)
-      ENDIF
+      IF (l_frac_occ .AND. .NOT. gamma_only) &
+      & CALL errore('dfpt', 'fraction occupation only implemented for gamma-only case', 1)
       !
       ! Allocation
       !
@@ -161,9 +160,12 @@ MODULE dfpt_module
 #endif
          !
          nbndval = nbnd_occ(iks)
-         IF (l_frac_occ) THEN
+         nbndval_frac = 0
+         IF(l_frac_occ) THEN
             nbndval_full = nbnd_occ_full(iks)
             nbndval_frac = nbndval - nbndval_full
+         ENDIF
+         IF(nbndval_frac > 0) THEN
             ALLOCATE(psi_dvpsi(nbndval_frac,band_group%nloc))
             !$acc enter data create(psi_dvpsi)
          ENDIF
@@ -325,7 +327,7 @@ MODULE dfpt_module
                !
             ENDIF
             !
-            IF(l_frac_occ) THEN
+            IF(nbndval_frac > 0) THEN
                !
                ! Compute <psi_j| dV |psi_i>
                !
@@ -356,11 +358,11 @@ MODULE dfpt_module
                CALL linsolve_sternheimer_m_wfcts( nbndval, band_group%nloc, dvpsi, dpsi, et_loc, eprec_loc, tr2, ierr )
                !
                IF(ierr /= 0) &
-                  WRITE(stdout, '(7X,"** WARNING : PERT ",I8," iks ",I8," not converged, ierr = ",I8)') ipert,iks,ierr
+               & WRITE(stdout, '(7X,"** WARNING : PERT ",I8," iks ",I8," not converged, ierr = ",I8)') ipert,iks,ierr
                !
             ENDIF
             !
-            IF(l_frac_occ) THEN
+            IF(nbndval_frac > 0) THEN
                !
                ! Add to dpsi: \sum_j <psi_j| dV | psi_i> / (e_i - e_j) |psi_j>
                !
@@ -490,7 +492,7 @@ MODULE dfpt_module
             !
          ENDDO ! ipert
          !
-         IF (l_frac_occ) THEN
+         IF(nbndval_frac > 0) THEN
             !$acc exit data delete(psi_dvpsi)
             DEALLOCATE(psi_dvpsi)
          ENDIF
