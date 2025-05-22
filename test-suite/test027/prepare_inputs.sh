@@ -18,8 +18,7 @@ celldm(1)       = 20
 nat             = 4
 ntyp            = 3
 ecutwfc         = 25
-nbnd            = 30
-input_dft       = 'pbe0'
+nbnd            = 16
 /
 &electrons
 diago_full_acc = .true.
@@ -34,18 +33,6 @@ H        0.397141530   0.411608770   0.500000000
 H        0.397141530   0.588391230   0.500000000
 O        0.565022174   0.500000000   0.500000000
 K_POINTS gamma
-EOF
-
-
-cat > wbse_init.in << EOF
-input_west:
-  qe_prefix: test
-  west_prefix: test
-  outdir: ./
-
-wbse_init_control:
-  wbse_init_calculation: S
-  solver: TDDFT
 EOF
 
 
@@ -66,6 +53,18 @@ wbse_control:
   trev_liouville: 0.00000001
   trev_liouville_rel: 0.000001
   l_pre_shift: True
-  l_forces: True
-  forces_state: 1
+EOF
+
+
+cat > westpp.in << EOF
+input_west:
+  qe_prefix: test
+  west_prefix: test
+  outdir: ./
+
+westpp_control:
+  westpp_calculation: C
+  westpp_range: [1,4]
+  westpp_n_liouville_to_use: 4
+  westpp_l_compute_tdm: True
 EOF

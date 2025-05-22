@@ -1,8 +1,8 @@
 #!/bin/bash
 
-${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/C_ONCV_PBE-1.0.upf
-${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/H_ONCV_PBE-1.0.upf
-${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/O_ONCV_PBE-1.0.upf
+${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/C_ONCV_PBE-1.2.upf
+${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/H_ONCV_PBE-1.2.upf
+${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/O_ONCV_PBE-1.2.upf
 
 cat > pw.in << EOF
 &control
@@ -24,9 +24,9 @@ nbnd            = 16
 diago_full_acc = .true.
 /
 ATOMIC_SPECIES
-C 12.0107  C_ONCV_PBE-1.0.upf
-H 1.0079  H_ONCV_PBE-1.0.upf
-O 16.00  O_ONCV_PBE-1.0.upf
+C 12.0107  C_ONCV_PBE-1.2.upf
+H 1.0079  H_ONCV_PBE-1.2.upf
+O 16.00  O_ONCV_PBE-1.2.upf
 ATOMIC_POSITIONS crystal
 C        0.452400000   0.500000000   0.500000000
 H        0.397141530   0.411608770   0.500000000

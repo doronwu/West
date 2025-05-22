@@ -27,7 +27,8 @@
 23. O2 molecule, spin-flip TDDFT (LDA) forces, Gamma only
 24. O2 molecule, spin-flip TDDFT (PBE) forces, Gamma only
 25. O2 molecule, spin-flip TDDFT (PBE0) forces, Gamma only
-26. Formaldehyde molecule, westpp excited state decomposition, Gamma only
+26. O2 molecule, spin-flip TDDFT (HSE) forces, Gamma only
+27. Formaldehyde molecule, westpp excited state decomposition, Gamma only
 
 ## Executing tests
 

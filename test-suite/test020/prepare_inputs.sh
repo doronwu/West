@@ -1,7 +1,7 @@
 #!/bin/bash
 
-${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/C_ONCV_PBE-1.0.upf
-${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/N_ONCV_PBE-1.0.upf
+${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/C_ONCV_PBE-1.2.upf
+${WGET} http://www.quantum-simulation.org/potentials/sg15_oncv/upf/N_ONCV_PBE-1.2.upf
 
 cat > pw.in << EOF
 &control
@@ -26,8 +26,8 @@ tot_magnetization = 2
 diago_full_acc = .true.
 /
 ATOMIC_SPECIES
-C  12.0107  C_ONCV_PBE-1.0.upf
-N  14.0067  N_ONCV_PBE-1.0.upf
+C  12.0107  C_ONCV_PBE-1.2.upf
+N  14.0067  N_ONCV_PBE-1.2.upf
 ATOMIC_POSITIONS crystal
 C            -0.0011453699       -0.0011377611        0.0067006607
 C            -0.0002744852       -0.0002672037        0.5008176648

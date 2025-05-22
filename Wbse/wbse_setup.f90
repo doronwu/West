@@ -184,7 +184,7 @@ SUBROUTINE bse_start()
   !
   ! the divergence term in Fock potential
   !
-  sigma_x_head = pot3D%compute_divergence('gb')
+  sigma_x_head = pot3D%div
   !
   ! compute macroscopic term, it needs macroscopic dielectric constant from input
   !
