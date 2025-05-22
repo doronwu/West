@@ -15,7 +15,7 @@ prefix       = 'test'
 ibrav   = 0
 nat     = 15
 ntyp    = 2
-ecutwfc = 20.0
+ecutwfc = 20
 nbnd    = 80
 /
 &electrons
