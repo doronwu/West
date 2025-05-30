@@ -15,7 +15,7 @@ SUBROUTINE solve_h1e()
   !-----------------------------------------------------------------------
   !
   USE westcom,              ONLY : n_bands,n_pairs,qp_bands,ijpmap,sigma_hf_full,sigma_corr_full,&
-                                 & sigma_exx_full,sigma_hf,sigma_sc_eqpsec,sigma_exx,qdet_dc
+                                 & sigma_exx_full,sigma_exx,qdet_dc
   USE kinds,                ONLY : DP
   USE pwcom,                ONLY : nspin,et
   USE io_push,              ONLY : io_push_title
@@ -169,8 +169,7 @@ SUBROUTINE compute_fock_double_counting(h1e_tmp)
   !
   REAL(DP), INTENT(INOUT) :: h1e_tmp(n_pairs,nspin)
   !
-  INTEGER :: is1, is1_g, is2, ipair, jpair, ijpair, ib, jb, kb
-  REAL(DP) :: prefactor
+  INTEGER :: is1, is1_g, ipair, jpair, ijpair, ib, jb, kb
   REAL(DP), ALLOCATABLE :: occ(:,:)
   !
   ! get global copy of occupation

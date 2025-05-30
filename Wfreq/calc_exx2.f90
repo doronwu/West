@@ -217,7 +217,7 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
                  !
                  IF(gamma_only) THEN
                     CALL single_invfft_gamma(dffts,npw,npwx,evc(:,iv),pertr,'Wave')
-                    !$acc parallel loop present(pertr1,psic1,pertr)
+                    !$acc parallel loop present(pertr1,psic1,pertr,psic)
                     DO ir = 1,dffts_nnr
                        IF(l_enable_off_diagonal .AND. jb < ib) THEN
                           pertr1(ir) = psic1(ir)*pertr(ir)
@@ -232,7 +232,7 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
                  ELSEIF(noncolin) THEN
                     CALL single_invfft_k(dffts,npwkq,npwx,evckmq(1:npwx,iv),pertr_nc(:,1),'Wave',igk_k(:,ikqs))
                     CALL single_invfft_k(dffts,npwkq,npwx,evckmq(1+npwx:npwx*2,iv),pertr_nc(:,2),'Wave',igk_k(:,ikqs))
-                    !$acc parallel loop present(pertr_nc,phase)
+                    !$acc parallel loop present(pertr_nc,phase,psic_nc)
                     DO ir = 1,dffts_nnr
                        pertr_nc(ir,1) = CONJG(pertr_nc(ir,1)*phase(ir))*psic_nc(ir,1) &
                        & +CONJG(pertr_nc(ir,2)*phase(ir))*psic_nc(ir,2)
@@ -241,7 +241,7 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
                     CALL single_fwfft_k(dffts,ngm,ngm,pertr_nc(:,1),pertg,'Rho') ! no igk
                  ELSE
                     CALL single_invfft_k(dffts,npwkq,npwx,evckmq(:,iv),pertr,'Wave',igk_k(:,ikqs))
-                    !$acc parallel loop present(pertr,phase)
+                    !$acc parallel loop present(pertr,phase,psic)
                     DO ir = 1,dffts_nnr
                        pertr(ir) = CONJG(pertr(ir)*phase(ir))*psic(ir)
                     ENDDO

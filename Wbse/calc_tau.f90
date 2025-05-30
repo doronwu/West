@@ -271,7 +271,7 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
            CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd_g),evc(:,jbnd_g),psic,'Wave')
         ENDIF
         !
-        !$acc parallel loop present(aux_r)
+        !$acc parallel loop present(aux_r,psic)
         DO ir = 1,dffts_nnr
            aux_r(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
         ENDDO

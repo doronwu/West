@@ -91,14 +91,14 @@ SUBROUTINE do_rho ( )
         !
         IF( gamma_only ) THEN
            CALL single_invfft_gamma(dffts,npw,npwx,evc(:,global_ib),psic,'Wave')
-           !$acc parallel loop present(auxr)
+           !$acc parallel loop present(auxr,psic)
            DO ir = 1, dffts_nnr
               auxr(ir) = auxr(ir) + REAL( psic(ir), KIND=DP) * REAL( psic(ir), KIND=DP) * wt_k * wt_b
            ENDDO
            !$acc end parallel
         ELSE
            CALL single_invfft_k(dffts,npw,npwx,evc(:,global_ib),psic,'Wave',igk_k(:,current_k))
-           !$acc parallel loop present(auxr)
+           !$acc parallel loop present(auxr,psic)
            DO ir = 1, dffts_nnr
               auxr(ir) = auxr(ir) + REAL( CONJG( psic(ir) ) * psic(ir), KIND=DP) * wt_k * wt_b
            ENDDO

@@ -204,7 +204,7 @@ SUBROUTINE do_loc ( )
            !
            IF(l_box) THEN
               !
-              !$acc parallel loop reduction(+:reduce,reduce2) present(filter_loc) copy(reduce,reduce2)
+              !$acc parallel loop reduction(+:reduce,reduce2) present(psic,filter_loc) copy(reduce,reduce2)
               DO ir = 1, dffts_nnr
                  rho = REAL(psic(ir),KIND=DP)**2
                  reduce = reduce+filter_loc(ir)*rho
@@ -217,7 +217,7 @@ SUBROUTINE do_loc ( )
               !
            ELSE
               !
-              !$acc parallel loop reduction(+:reduce2) present(auxc) copy(reduce2)
+              !$acc parallel loop reduction(+:reduce2) present(psic,auxc) copy(reduce2)
               DO ir = 1, dffts_nnr
                  rho = REAL(psic(ir),KIND=DP)**2
                  auxc(ir) = CMPLX(rho,KIND=DP)
@@ -250,7 +250,7 @@ SUBROUTINE do_loc ( )
            !
            CALL single_invfft_k(dffts,npw,npwx,evc(:,ib_g),psic,'Wave',igk_k(:,current_k))
            !
-           !$acc parallel loop reduction(+:reduce,reduce2) present(filter_loc) copy(reduce,reduce2)
+           !$acc parallel loop reduction(+:reduce,reduce2) present(psic,filter_loc) copy(reduce,reduce2)
            DO ir = 1, dffts_nnr
               rho = REAL(CONJG(psic(ir))*psic(ir),KIND=DP)
               reduce = reduce+filter_loc(ir)*rho

@@ -142,14 +142,14 @@ SUBROUTINE calc_vxc( sigma_vxcl, sigma_vxcnl )
                  !
                  IF (l_enable_off_diagonal .AND. jb_glob < gwbnd%l2g(ib)) THEN
                     CALL single_invfft_gamma(dffts,npw,npwx,evc(:,qp_bands(jb_glob,is)),psic1,'Wave')
-                    !$acc parallel loop reduction(+:braket) present(psic1,vxc) copy(braket)
+                    !$acc parallel loop reduction(+:braket) present(psic,psic1,vxc) copy(braket)
                     DO ir = 1, dfftp_nnr
                        braket = braket + psic(ir) * CONJG(psic1(ir)) * vxc(ir,current_spin)
                     ENDDO
                     !$acc end parallel
                     sigma_vxcl_full(ipair,iks_g) = REAL(braket,KIND=DP) / nnr
                  ELSEIF ( jb_glob == gwbnd%l2g(ib) ) THEN
-                    !$acc parallel loop reduction(+:braket) present(vxc) copy(braket)
+                    !$acc parallel loop reduction(+:braket) present(psic,vxc) copy(braket)
                     DO ir = 1, dfftp_nnr
                        braket = braket + psic(ir) * CONJG(psic(ir)) * vxc(ir,current_spin)
                     ENDDO
@@ -169,7 +169,7 @@ SUBROUTINE calc_vxc( sigma_vxcl, sigma_vxcnl )
               CALL single_invfft_k(dffts,npw,npwx,evc(:,qp_bands(gwbnd%l2g(ib),is)),psic,'Wave',&
               & igk_k(:,current_k))
               braket = 0._DP
-              !$acc parallel loop reduction(+:braket) present(vxc) copy(braket)
+              !$acc parallel loop reduction(+:braket) present(psic,vxc) copy(braket)
               DO ir = 1, dfftp_nnr
                  braket = braket + psic(ir) * CONJG(psic(ir)) * vxc(ir,current_spin)
               ENDDO
@@ -183,7 +183,7 @@ SUBROUTINE calc_vxc( sigma_vxcl, sigma_vxcnl )
                  CALL single_invfft_k(dffts,npw,npwx,evc(1+npwx:npwx*2,qp_bands(gwbnd%l2g(ib),is)),&
                  & psic,'Wave',igk_k(:,current_k))
                  braket = 0._DP
-                 !$acc parallel loop reduction(+:braket) present(vxc) copy(braket)
+                 !$acc parallel loop reduction(+:braket) present(psic,vxc) copy(braket)
                  DO ir = 1, dfftp_nnr
                     braket = braket + psic(ir) * CONJG(psic(ir)) * vxc(ir,current_spin)
                  ENDDO
