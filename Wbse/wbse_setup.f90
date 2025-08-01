@@ -122,14 +122,14 @@ SUBROUTINE wbse_setup()
         !
      ENDIF
      !
+     !$acc enter data copyin(pot3D)
+     !$acc enter data copyin(pot3D%sqvc)
+     !
   ELSE
      !
      CALL pot3D%init('Rho',.FALSE.,'gb')
      !
   ENDIF
-  !
-  !$acc enter data copyin(pot3D)
-  !$acc enter data copyin(pot3D%sqvc)
   !
   CALL pot3D%print_divergence()
   !
