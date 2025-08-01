@@ -126,7 +126,7 @@ SUBROUTINE do_resp()
               !
               CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),dvg_exc(:,ibnd,iks,lexc),psic,'Wave')
               !
-              !$acc parallel loop present(rho)
+              !$acc parallel loop present(rho,psic)
               DO ir = 1, dffts_nnr
                  rho(ir) = rho(ir) + w1 * REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))
               ENDDO
@@ -137,7 +137,7 @@ SUBROUTINE do_resp()
               CALL single_invfft_k(dffts,npw,npwx,evc(:,ibnd),psic,'Wave',igk_k(:,current_k))
               CALL single_invfft_k(dffts,npw,npwx,dvg_exc(:,ibnd,iks,lexc),psic_aux,'Wave',igk_k(:,current_k))
               !
-              !$acc parallel loop present(rho,psic_aux)
+              !$acc parallel loop present(rho,psic,psic_aux)
               DO ir = 1, dffts_nnr
                  rho(ir) = rho(ir) + w1 * CONJG(psic(ir))*psic_aux(ir)
               ENDDO

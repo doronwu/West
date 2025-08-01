@@ -251,7 +251,7 @@ MODULE dfpt_module
                   !
                   CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),evc(:,jbnd),psic,'Wave')
                   !
-                  !$acc parallel loop present(aux_r)
+                  !$acc parallel loop present(psic,aux_r)
                   DO ir = 1,dffts_nnr
                      psic(ir) = psic(ir)*REAL(aux_r(ir),KIND=DP)
                   ENDDO
@@ -269,7 +269,7 @@ MODULE dfpt_module
                   !
                   CALL single_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),psic,'Wave')
                   !
-                  !$acc parallel loop present(aux_r)
+                  !$acc parallel loop present(psic,aux_r)
                   DO ir = 1,dffts_nnr
                      psic(ir) = CMPLX(REAL(psic(ir),KIND=DP)*REAL(aux_r(ir),KIND=DP),KIND=DP)
                   ENDDO
@@ -292,7 +292,7 @@ MODULE dfpt_module
                   ! ... construct right-hand-side term of Sternheimer equation:
                   ! ... product of wavefunction at [k-q], phase and perturbation in real space
                   !
-                  !$acc parallel loop present(phase,aux_r)
+                  !$acc parallel loop present(psic,phase,aux_r)
                   DO ir = 1,dffts_nnr
                      psic(ir) = psic(ir)*phase(ir)*aux_r(ir)
                   ENDDO
@@ -314,7 +314,7 @@ MODULE dfpt_module
                      !
                      CALL single_invfft_k(dffts,npwkq,npwx,evckmq(npwx+1:npwx*2,ibnd),psic,'Wave',igk_k(:,ikqs))
                      !
-                     !$acc parallel loop present(phase,aux_r)
+                     !$acc parallel loop present(psic,phase,aux_r)
                      DO ir = 1,dffts_nnr
                         psic(ir) = psic(ir)*phase(ir)*aux_r(ir)
                      ENDDO
@@ -416,7 +416,7 @@ MODULE dfpt_module
                   CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),dpsi(:,lbnd),psic,'Wave')
                   !
                   this_occ = occupation(ibnd,iks)
-                  !$acc parallel loop present(aux_r)
+                  !$acc parallel loop present(aux_r,psic)
                   DO ir = 1,dffts_nnr
                      aux_r(ir) = aux_r(ir)+CMPLX(this_occ*REAL(psic(ir),KIND=DP)*AIMAG(psic(ir)),KIND=DP)
                   ENDDO
@@ -438,7 +438,7 @@ MODULE dfpt_module
                   !
                   CALL single_invfft_k(dffts,npw,npwx,dpsi(1:npwx,lbnd),dpsic,'Wave',igk_k(:,iks))
                   !
-                  !$acc parallel loop present(aux_r,phase,dpsic)
+                  !$acc parallel loop present(aux_r,psic,phase,dpsic)
                   DO ir = 1,dffts_nnr
                      aux_r(ir) = aux_r(ir)+CONJG(psic(ir)*phase(ir))*dpsic(ir)
                   ENDDO
@@ -455,7 +455,7 @@ MODULE dfpt_module
                      !
                      CALL single_invfft_k(dffts,npw,npwx,dpsi(npwx+1:npwx*2,lbnd),dpsic,'Wave',igk_k(:,iks))
                      !
-                     !$acc parallel loop present(aux_r,phase,dpsic)
+                     !$acc parallel loop present(aux_r,psic,phase,dpsic)
                      DO ir = 1,dffts_nnr
                         aux_r(ir) = aux_r(ir)+CONJG(psic(ir)*phase(ir))*dpsic(ir)
                      ENDDO

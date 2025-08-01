@@ -179,7 +179,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),evc(:,jbnd),psic,'Wave')
            !
-           !$acc parallel loop present(dvrs)
+           !$acc parallel loop present(psic,dvrs)
            DO ir = 1,dffts_nnr
               psic(ir) = psic(ir)*CMPLX(REAL(dvrs(ir,current_spin),KIND=DP),KIND=DP)
            ENDDO
@@ -198,7 +198,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
            !
            CALL single_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),psic,'Wave')
            !
-           !$acc parallel loop present(dvrs)
+           !$acc parallel loop present(psic,dvrs)
            DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(psic(ir),KIND=DP)*REAL(dvrs(ir,current_spin),KIND=DP),KIND=DP)
            ENDDO
@@ -470,7 +470,7 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),evc(:,jbnd),psic,'Wave')
            !
-           !$acc parallel loop present(dvrs)
+           !$acc parallel loop present(psic,dvrs)
            DO ir = 1,dffts_nnr
               psic(ir) = psic(ir)*CMPLX(REAL(dvrs(ir,current_spin),KIND=DP),KIND=DP)
            ENDDO
@@ -489,7 +489,7 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
            !
            CALL single_invfft_gamma(dffts,npw,npwx,evc(:,ibnd),psic,'Wave')
            !
-           !$acc parallel loop present(dvrs)
+           !$acc parallel loop present(psic,dvrs)
            DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(psic(ir),KIND=DP)*REAL(dvrs(ir,current_spin),KIND=DP),KIND=DP)
            ENDDO

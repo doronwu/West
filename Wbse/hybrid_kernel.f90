@@ -103,7 +103,7 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,jbnd,ikq),evc(:,ibndp),psic,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(caux,psic)
            DO ir = 1, dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
@@ -121,13 +121,13 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc(:,jbndp),caux,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(psic,caux)
            DO ir = 1, dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
-           !$acc parallel loop present(raux)
+           !$acc parallel loop present(raux,psic)
            DO ir = 1, dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
@@ -262,7 +262,7 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,jbnd,ikq),evc(:,ibndp),psic,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(caux,psic)
            DO ir = 1, dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
@@ -280,13 +280,13 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc1_all(:,jbnd,ikq),caux,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(psic,caux)
            DO ir = 1, dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
-           !$acc parallel loop present(raux)
+           !$acc parallel loop present(raux,psic)
            DO ir = 1, dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
@@ -430,7 +430,7 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,ibnd,iks_do),evc1_all(:,jbnd,iks_do),&
            & psic,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(caux,psic)
            DO ir = 1, dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
@@ -448,13 +448,13 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc(:,jbndp),caux,'Wave')
            !
-           !$acc parallel loop present(caux)
+           !$acc parallel loop present(psic,caux)
            DO ir = 1, dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
-           !$acc parallel loop present(raux)
+           !$acc parallel loop present(raux,psic)
            DO ir = 1, dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO

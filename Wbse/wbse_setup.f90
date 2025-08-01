@@ -167,7 +167,6 @@ SUBROUTINE bse_start()
                                  & sigma_c_head,sigma_x_head,wbse_epsinfty,l_local_repr,&
                                  & overlap_thr,u_matrix,ovl_matrix,n_bse_idx,idx_matrix
   USE constants,            ONLY : e2,pi
-  USE cell_base,            ONLY : omega
   USE types_coulomb,        ONLY : pot3D
   USE wbse_io,              ONLY : read_umatrix_and_omatrix
   USE distribution_center,  ONLY : kpt_pool,band_group

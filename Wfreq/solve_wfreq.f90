@@ -429,7 +429,7 @@ SUBROUTINE solve_wfreq_gamma(l_read_restart,l_generate_plot,l_QDET)
               !
               CALL single_invfft_gamma(dffts,npwq,npwqx,pertg,pertr,TRIM(fftdriver))
               !
-              !$acc parallel loop present(pertr)
+              !$acc parallel loop present(pertr,psic)
               DO ir = 1,dffts_nnr
                  pertr(ir) = psic(ir)*pertr(ir)
               ENDDO

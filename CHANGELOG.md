@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+v6.2.1 (2025/xx/xx)
+-------------------
+
+- Added the spectral function to the output of `wfreq_calculation: P`. The spectral function can be used to select the most physical root of the QP equation when there are multiple roots.
+- Bug fix. Fixed `wbse` when using TDDFT with the HSE hybrid functional.
+- Updated build. Updated deprecated usage of `setup.py`.
+- Updated CI/CD. Added a test of TDDFT with the HSE functional.
+- Updated documentation. Updated build instructions for ALCF/Polaris and NERSC/Perlmutter. Added more tutorials.
+
 v6.2.0 (2025/03/15)
 -------------------
 

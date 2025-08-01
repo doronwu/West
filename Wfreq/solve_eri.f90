@@ -256,7 +256,7 @@ SUBROUTINE compute_braket(braket)
            !
            CALL double_invfft_gamma(dffts,npwq,npwqx,proj_c(:,i,s_g),proj_c(:,j,s_g),psic,'Wave')
            !
-           !$acc parallel loop present(rho_r)
+           !$acc parallel loop present(rho_r,psic)
            DO ir = 1, dffts_nnr
               rho_r(ir) = REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))
            ENDDO
@@ -374,7 +374,7 @@ SUBROUTINE compute_eri_vc(eri_vc)
         !
         CALL double_invfft_gamma(dffts,npwq,npwqx,proj_c(:,i,s1_g),proj_c(:,j,s1_g),psic,'Wave')
         !
-        !$acc parallel loop present(rho_r)
+        !$acc parallel loop present(rho_r,psic)
         DO ir = 1, dffts_nnr
            rho_r(ir) = REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))
         ENDDO
@@ -415,7 +415,7 @@ SUBROUTINE compute_eri_vc(eri_vc)
            !
            CALL double_invfft_gamma(dffts,npwq,npwqx,proj_c(:,k,s1_g),proj_c(:,l,s1_g),psic,'Wave')
            !
-           !$acc parallel loop present(rho_r)
+           !$acc parallel loop present(rho_r,psic)
            DO ir = 1, dffts_nnr
               rho_r(ir) = REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))
            ENDDO
@@ -502,7 +502,7 @@ SUBROUTINE compute_eri_vc(eri_vc)
            !
            CALL double_invfft_gamma(dffts,npwq,npwqx,proj_c(:,k,s2),proj_c(:,l,s2),psic,'Wave')
            !
-           !$acc parallel loop present(rho_r)
+           !$acc parallel loop present(rho_r,psic)
            DO ir = 1, dffts_nnr
               rho_r(ir) = REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))
            ENDDO

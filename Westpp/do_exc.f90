@@ -196,12 +196,13 @@ SUBROUTINE do_exc()
               !
               rcoeff = 0._DP
               IF(drmin_id > 0) THEN
+                 !$acc update host(psic)
                  tmp = psic(drmin_id)
                  rcoeff = REAL(tmp,KIND=DP)
               ENDIF
               CALL mp_sum(rcoeff,intra_bgrp_comm)
               !
-              !$acc parallel loop present(rho_aux)
+              !$acc parallel loop present(rho_aux,psic)
               DO ir = 1, dffts_nnr
                  rho_aux(ir) = rho_aux(ir) + w1 * CMPLX(rcoeff*AIMAG(psic(ir)),KIND=DP)
               ENDDO
@@ -214,6 +215,7 @@ SUBROUTINE do_exc()
               !
               zcoeff = 0._DP
               IF(drmin_id > 0) THEN
+                 !$acc update host(psic)
                  zcoeff = psic(drmin_id)
               ENDIF
               CALL mp_sum(zcoeff,intra_bgrp_comm)
