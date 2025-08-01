@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-v6.2.1 (2025/xx/xx)
+v6.2.1 (2025/07/31)
 -------------------
 
 - Added the spectral function to the output of `wfreq_calculation: P`. The spectral function can be used to select the most physical root of the QP equation when there are multiple roots.
