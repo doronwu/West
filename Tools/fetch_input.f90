@@ -71,6 +71,9 @@ SUBROUTINE fetch_input_yml(num_drivers, driver, verbose)
   CHARACTER(LEN=512), EXTERNAL :: trimcheck
   CHARACTER(LEN=:),ALLOCATABLE :: cvalue
   INTEGER :: lenc
+  !
+  ! Workaround for nvfortran compiler bug
+  !
   INTEGER, PARAMETER :: DUMMY_DEFAULT = -1210
   !
   CALL start_clock('fetch_input')
