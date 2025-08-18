@@ -327,9 +327,9 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
               ENDDO
               !
               IF(nbgrp > 1) THEN
-                 !$acc update host(aux1_g)
+                 !$acc host_data use_device(aux1_g)
                  CALL mp_sum(aux1_g,inter_bgrp_comm)
-                 !$acc update device(aux1_g)
+                 !$acc end host_data
               ENDIF
               !
               !$acc parallel loop present(tau,aux1_g,pot3D,pot3D%sqvc)

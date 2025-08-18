@@ -502,9 +502,9 @@ SUBROUTINE solve_wfreq_gamma(l_read_restart,l_generate_plot,l_QDET)
 #endif
            !
            IF(nimage > 1) THEN
-              !$acc update host(overlap)
+              !$acc host_data use_device(overlap)
               CALL mp_sum(overlap,inter_image_comm)
-              !$acc update device(overlap)
+              !$acc end host_data
            ENDIF
            !
            ! Update dmati with cond
@@ -1489,9 +1489,9 @@ SUBROUTINE solve_wfreq_k(l_read_restart,l_generate_plot)
 #endif
               !
               IF(nimage > 1) THEN
-                 !$acc update host(overlap)
+                 !$acc host_data use_device(overlap)
                  CALL mp_sum(overlap,inter_image_comm)
-                 !$acc update device(overlap)
+                 !$acc end host_data
               ENDIF
               !
               ! Update zmati with cond
