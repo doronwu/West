@@ -577,9 +577,9 @@ SUBROUTINE rhs_zvector_part2( dvg_exc_tmp, z_rhs_vec )
         & 2*npwx*npol,dv_vv_mat,nbndval0x-n_trunc_bands,0._DP,dpcpart,2*npwx*npol)
         !$acc end host_data
         !
-        !$acc update host(dpcpart)
+        !$acc host_data use_device(dpcpart)
         CALL mp_sum(dpcpart,inter_bgrp_comm)
-        !$acc update device(dpcpart)
+        !$acc end host_data
         !
         !$acc parallel loop collapse(2) present(z_rhs_vec_part2,dpcpart)
         DO lbnd = 1,nbnd_do
@@ -815,9 +815,9 @@ SUBROUTINE rhs_zvector_part2( dvg_exc_tmp, z_rhs_vec )
            & 2*npwx*npol,dv_vv_mat,nbndval0x-n_trunc_bands,0._DP,dpcpart,2*npwx*npol)
            !$acc end host_data
            !
-           !$acc update host(dpcpart)
+           !$acc host_data use_device(dpcpart)
            CALL mp_sum(dpcpart,inter_bgrp_comm)
-           !$acc update device(dpcpart)
+           !$acc end host_data
            !
            ! recompute nbnd_do for the current spin channel
            !
@@ -1445,9 +1445,9 @@ SUBROUTINE rhs_zvector_part4( dvg_exc_tmp, z_rhs_vec )
      & 2*npwx*npol,dv_vv_mat,nbndval0x-n_trunc_bands,0._DP,dpcpart,2*npwx*npol)
      !$acc end host_data
      !
-     !$acc update host(dpcpart)
+     !$acc host_data use_device(dpcpart)
      CALL mp_sum(dpcpart,inter_bgrp_comm)
-     !$acc update device(dpcpart)
+     !$acc end host_data
      !
      ! compute nbnd_do for the current spin channel
      !

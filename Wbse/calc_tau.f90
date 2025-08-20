@@ -104,11 +104,12 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   USE kinds,                ONLY : DP
   USE cell_base,            ONLY : omega
   USE io_push,              ONLY : io_push_title
-  USE types_coulomb,        ONLY : pot3D
-  USE westcom,              ONLY : ev,dvg,wbse_init_calculation,wbse_init_save_dir,l_bse,l_pdep,&
-                                 & chi_kernel,l_local_repr,overlap_thr,n_trunc_bands
+  USE class_coulomb,        ONLY : coulomb
+  USE westcom,              ONLY : ev,dvg,wbse_init_calculation,wbse_init_save_dir,l_hybrid_tddft,&
+                                 & l_bse,l_pdep,chi_kernel,l_local_repr,overlap_thr,n_trunc_bands
   USE fft_base,             ONLY : dffts
   USE noncollin_module,     ONLY : npol
+  USE exx_base,             ONLY : erfc_scrlen
   USE pwcom,                ONLY : npw,npwx,lsda
   USE pdep_io,              ONLY : pdep_merge_and_write_G
   USE class_idistribute,    ONLY : idistribute
@@ -158,6 +159,8 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   !
   LOGICAL :: l_xcchi,l_skip,l_restart
   !
+  TYPE(coulomb) :: pot3D_x
+  TYPE(coulomb) :: pot3D_c
   TYPE(bar_type) :: barra
   !
   SELECT CASE(wbse_init_calculation)
@@ -168,6 +171,37 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   CASE DEFAULT
      CALL errore('calc_tau','invalid wbse_init_calculation',1)
   END SELECT
+  !
+  IF(l_hybrid_tddft) THEN
+     !
+     IF(erfc_scrlen > 0._DP) THEN
+        !
+        ! HSE functional, mya = 1._DP, myb = -1._DP, mymu = erfc_scrlen
+        !
+        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=-1._DP,mymu=erfc_scrlen)
+        !
+     ELSE
+        !
+        ! PBE0 functional, mya = 1._DP, myb = 0._DP, mymu = 1._DP to avoid divergence
+        !
+        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=0._DP,mymu=1._DP)
+        !
+     ENDIF
+     !
+     !$acc enter data copyin(pot3D_x)
+     !$acc enter data copyin(pot3D_x%sqvc)
+     !
+  ELSE
+     !
+     CALL pot3D_x%init('Rho',.FALSE.,'gb')
+     CALL pot3D_c%init('Wave',.FALSE.,'default')
+     !
+     !$acc enter data copyin(pot3D_x)
+     !$acc enter data copyin(pot3D_x%sqvc)
+     !$acc enter data copyin(pot3D_c)
+     !$acc enter data copyin(pot3D_c%sqvc)
+     !
+  ENDIF
   !
   IF(.NOT. l_pdep) THEN
      !
@@ -287,9 +321,9 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
         tau(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        !$acc parallel loop present(tau,aux1_g,pot3D,pot3D%sqvc)
+        !$acc parallel loop present(tau,aux1_g,pot3D_x,pot3D_x%sqvc)
         DO ig = 1,npw
-           tau(ig) = aux1_g(ig)*(pot3D%sqvc(ig)**2)
+           tau(ig) = aux1_g(ig)*(pot3D_x%sqvc(ig)**2)
         ENDDO
         !$acc end parallel
         !
@@ -297,9 +331,9 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
            !
            IF(l_pdep) THEN
               !
-              !$acc parallel loop present(aux1_g,pot3D,pot3D%sqvc)
+              !$acc parallel loop present(aux1_g,pot3D_c,pot3D_c%sqvc)
               DO ig = 1,npw
-                 aux1_g(ig) = aux1_g(ig)*pot3D%sqvc(ig)
+                 aux1_g(ig) = aux1_g(ig)*pot3D_c%sqvc(ig)
               ENDDO
               !$acc end parallel
               !
@@ -327,14 +361,14 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
               ENDDO
               !
               IF(nbgrp > 1) THEN
-                 !$acc update host(aux1_g)
+                 !$acc host_data use_device(aux1_g)
                  CALL mp_sum(aux1_g,inter_bgrp_comm)
-                 !$acc update device(aux1_g)
+                 !$acc end host_data
               ENDIF
               !
-              !$acc parallel loop present(tau,aux1_g,pot3D,pot3D%sqvc)
+              !$acc parallel loop present(tau,aux1_g,pot3D_c,pot3D_c%sqvc)
               DO ig = 1,npw
-                 tau(ig) = tau(ig)+aux1_g(ig)*pot3D%sqvc(ig)
+                 tau(ig) = tau(ig)+aux1_g(ig)*pot3D_c%sqvc(ig)
               ENDDO
               !$acc end parallel
               !
@@ -482,6 +516,13 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   ENDDO
   !
   CALL stop_bar_type(barra,'tau')
+  !
+  !$acc exit data delete(pot3D_x%sqvc)
+  !$acc exit data delete(pot3D_x)
+  IF(.NOT. l_hybrid_tddft) THEN
+     !$acc exit data delete(pot3D_c%sqvc)
+     !$acc exit data delete(pot3D_c)
+  ENDIF
   !
   !$acc exit data delete(dvg,tau,aux_r,aux1_g)
   DEALLOCATE(tau)

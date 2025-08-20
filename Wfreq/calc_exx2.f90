@@ -85,6 +85,9 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
         ALLOCATE(pertg1(ngm))
         !$acc enter data create(psic1,pertr1,pertg1)
      ENDIF
+     CALL pot3D%init('Rho',.FALSE.,'gb')
+     !$acc enter data copyin(pot3D)
+     !$acc enter data copyin(pot3D%sqvc)
   ELSE
      peso = 1._DP
      ALLOCATE(phase(dffts%nnr))
@@ -181,11 +184,12 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
               !
               IF(gamma_only) THEN
                  l_gammaq = .TRUE.
-                 CALL pot3D%init('Rho',.FALSE.,'gb')
                  nbndval = nbnd_occ(iks)
               ELSE
                  l_gammaq = q_grid%l_pIsGamma(iq)
                  CALL pot3D%init('Rho',.FALSE.,'gb',iq)
+                 !$acc enter data copyin(pot3D)
+                 !$acc enter data copyin(pot3D%sqvc)
                  !
                  CALL k_grid%find(k_grid%p_cart(:,ik)-q_grid%p_cart(:,iq),'cart',ikq,g0)
                  ikqs = k_grid%ipis2ips(ikq,is)
@@ -198,9 +202,6 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
                  !
                  !$acc update device(evckmq,phase)
               ENDIF
-              !
-              !$acc enter data copyin(pot3D)
-              !$acc enter data copyin(pot3D%sqvc)
               !
               vband = idistribute()
               CALL vband%init(nbndval,'i','nbndval',.FALSE.)
@@ -291,8 +292,10 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
                  !
               ENDDO ! ivloc
               !
-              !$acc exit data delete(pot3D%sqvc)
-              !$acc exit data delete(pot3D)
+              IF(.NOT. gamma_only) THEN
+                 !$acc exit data delete(pot3D%sqvc)
+                 !$acc exit data delete(pot3D)
+              ENDIF
               !
            ENDDO ! iq
            !
@@ -328,6 +331,8 @@ SUBROUTINE calc_exx2(sigma_exx, l_QDET)
         DEALLOCATE(pertr1)
         DEALLOCATE(pertg1)
      ENDIF
+     !$acc exit data delete(pot3D%sqvc)
+     !$acc exit data delete(pot3D)
   ELSE
      !$acc exit data delete(phase,evckmq)
      DEALLOCATE(phase)
