@@ -14,7 +14,7 @@ v6.2.0 (2025/03/15)
 -------------------
 
 - Code updated for compatibility with Quantum ESPRESSO 7.4.1. QE must be compiled without CMake.
-- Added an option to choose the double counting scheme in QDET calculations.
+- Added an option to choose the double counting scheme in QDET calculations (Chen et al., J. Chem. Theory Comput. 21, 7797 (2025)).
 - Improved the performance of QDET for large active spaces.
 - Bug fix. Fixed `wfreq` when computing the off-diagonal terms of the self-energy.
 - Bug fix. Fixed `westpp` output of wave functions and PDEP functions with k-points.
