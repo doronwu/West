@@ -52,20 +52,20 @@ WESTLIBS = \
 
 TLDEPS = bindir mods pwlibs pw
 
-all : title tldeps westpp.x
+all: title tldeps westpp.x
 
-westpp.x : $(WESTPP_OBJS) $(WESTLIBS) $(PWOBJS) $(QEMODS)
+westpp.x: $(WESTPP_OBJS) $(WESTLIBS) $(PWOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(QELIBS) $(PYT_LDFLAGS)
 	- ( cd ../../bin ; ln -fs ../West/Westpp/westpp.x . )
 
-tldeps :
+tldeps:
 	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
 
-clean :
+clean:
 	- /bin/rm -f *.x *.o *.a *~ *_tmp.f90 *.d *.mod *.i *.L
 	- /bin/rm -f ../../bin/westpp.x
 
-title :
+title:
 	@echo
 	@echo "##############"
 	@echo "### Westpp ###"

@@ -38,7 +38,7 @@ base64_undo:
 
 distclean: clean
 
-title :
+title:
 	@echo
 	@echo "##############"
 	@echo "## Libraries #"
