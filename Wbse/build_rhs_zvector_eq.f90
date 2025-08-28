@@ -63,10 +63,8 @@ SUBROUTINE build_rhs_zvector_eq(dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_v
   !
   ! part4: d < a | K1d | a > / d | v >
   !
-  IF(l_hybrid_tddft) THEN
+  IF(l_hybrid_tddft .OR. l_bse) THEN
      CALL rhs_zvector_part4( dvg_exc_tmp, z_rhs_vec )
-  ELSEIF(l_bse) THEN
-     CALL errore('build_rhs_zvector_eq', 'BSE forces not implemented', 1)
   ENDIF
   !
   ! part1: d < a | D | a > / d | v >
@@ -127,9 +125,11 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
   USE bar,                  ONLY : bar_type,start_bar_type,update_bar_type,stop_bar_type
   USE distribution_center,  ONLY : kpt_pool,band_group
   USE mp_global,            ONLY : inter_image_comm,my_image_id
-  USE wbse_dv,              ONLY : wbse_dv_of_drho
+  USE wbse_dv,              ONLY : wbse_dv_setup,wbse_dv_of_drho
   USE wbse_bgrp,            ONLY : gather_bands
   USE west_mp,              ONLY : west_mp_wait
+  USE eqv,                  ONLY : dmuxc
+  USE xc_lib,               ONLY : xclib_dft_is
   USE wavefunctions,        ONLY : evc,psic
 #if defined(__CUDA)
   USE cublas
@@ -167,7 +167,7 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
   z_rhs_vec_part1(:,:,:) = (0._DP,0._DP)
   !$acc end kernels
   !
-  IF(l_bse .OR. l_hybrid_tddft) THEN
+  IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
      !
      ALLOCATE(tmp_vec(npwx*npol, band_group%nlocx, kpt_pool%nloc))
      !$acc enter data create(tmp_vec)
@@ -196,9 +196,13 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
   !
   !$acc enter data copyin(drhox)
   !
+  DEALLOCATE(dmuxc)
+  CALL wbse_dv_setup(.FALSE.)
+  !
   lrpa = l_bse
   !
-  CALL wbse_dv_of_drho(drhox,lrpa,.FALSE.)
+  !CALL wbse_dv_of_drho(drhox,lrpa,.FALSE.)
+  CALL wbse_dv_of_drho(drhox,.FALSE.,.FALSE.)
   !
   CALL start_bar_type(barra,'zvec1',kpt_pool%nloc)
   !
@@ -269,11 +273,15 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
         !
      ENDIF
      !
-     IF(l_bse) CALL errore('build_rhs_zvector_eq', 'BSE forces not implemented', 1)
+     !IF(l_bse) CALL errore('build_rhs_zvector_eq', 'BSE forces not implemented', 1)
      !
-     IF(l_hybrid_tddft) THEN
-        !
-        CALL hybrid_kernel_term3(current_spin,dvg_exc_tmp,z_rhs_vec_part1(:,:,iks),l_spin_flip)
+     IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
+         !
+        IF(l_hybrid_tddft) THEN
+           CALL hybrid_kernel_term3(current_spin,dvg_exc_tmp,z_rhs_vec_part1(:,:,iks),l_spin_flip)
+        ELSEIF(l_bse .AND. xclib_dft_is('hybrid')) THEN
+           CALL hybrid_kernel_term3(current_spin,dvg_exc_tmp,z_rhs_vec_part1(:,:,iks),l_spin_flip)
+        ENDIF
         !
         IF(l_spin_flip) THEN
            iks_do = flks(iks)
@@ -291,7 +299,11 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
 #if !defined(__GPU_MPI)
         !$acc update device(evc1_all(:,:,iks))
 #endif
-        CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),z_rhs_vec_part1(:,:,iks),.FALSE.)
+        IF(l_hybrid_tddft) THEN
+           CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),z_rhs_vec_part1(:,:,iks),.FALSE.)
+        ELSEIF(l_bse .AND. xclib_dft_is('hybrid')) THEN
+           CALL hybrid_kernel_term1(current_spin,evc1_all(:,:,iks),z_rhs_vec_part1(:,:,iks),.FALSE.)
+        ENDIF
         !
      ENDIF
      !
@@ -327,7 +339,7 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
   DEALLOCATE(dotp)
   !$acc exit data delete(z_rhs_vec_part1)
   DEALLOCATE(z_rhs_vec_part1)
-  IF(l_bse .OR. l_hybrid_tddft) THEN
+  IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
      !$acc exit data delete(tmp_vec)
      DEALLOCATE(tmp_vec)
   ENDIF
@@ -1307,7 +1319,8 @@ SUBROUTINE rhs_zvector_part4( dvg_exc_tmp, z_rhs_vec )
   USE kinds,                ONLY : DP
   USE io_push,              ONLY : io_push_title
   USE gvect,                ONLY : gstart
-  USE westcom,              ONLY : iuwfc,lrwfc,nbnd_occ,nbndval0x,n_trunc_bands,l_spin_flip,evc1_all
+  USE westcom,              ONLY : iuwfc,lrwfc,nbnd_occ,nbndval0x,n_trunc_bands,l_bse,&
+                                 & l_hybrid_tddft,l_spin_flip,evc1_all
   USE pwcom,                ONLY : isk,lsda,nspin,current_spin,current_k,ngk,npwx,npw
   USE mp,                   ONLY : mp_sum,mp_bcast
   USE buffers,              ONLY : get_buffer
@@ -1402,7 +1415,11 @@ SUBROUTINE rhs_zvector_part4( dvg_exc_tmp, z_rhs_vec )
      !
      ! Compute the first part
      !
-     CALL hybrid_kernel_term4(current_spin,dvg_exc_tmp,z_rhs_vec_part4(:,:,iks),l_spin_flip)
+     IF((.NOT. l_bse) .AND. l_hybrid_tddft) THEN
+        CALL hybrid_kernel_term4(current_spin,dvg_exc_tmp,z_rhs_vec_part4(:,:,iks),l_spin_flip)
+     ELSEIF(l_bse) THEN
+        CALL bse_kernel_term4(current_spin,dvg_exc_tmp,z_rhs_vec_part4(:,:,iks),l_spin_flip)
+     ENDIF
      !
      ! Compute the second part: dv_vv_mat
      !

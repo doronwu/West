@@ -368,4 +368,164 @@ MODULE pdep_db
       !
     END SUBROUTINE
     !
+    ! *****************************
+    ! TMP PDEP READ
+    ! *****************************
+    !
+    !------------------------------------------------------------------------
+    SUBROUTINE tmp_pdep_db_read(nglob_to_be_read,iq,lprintinfo)
+      !------------------------------------------------------------------------
+      !
+      USE westcom,             ONLY : n_pdep_eigen,ev,dvg,npwqx,wstat_save_dir
+      USE io_global,           ONLY : stdout
+      USE mp,                  ONLY : mp_bcast
+      USE mp_world,            ONLY : world_comm,mpime,root
+      USE pdep_io,             ONLY : pdep_read_G_and_distribute
+      USE io_push,             ONLY : io_push_bar
+      USE json_module,         ONLY : json_file,json_value,json_core
+      !
+      IMPLICIT NONE
+      !
+      ! I/O
+      !
+      INTEGER,INTENT(IN) :: nglob_to_be_read
+      INTEGER,INTENT(IN),OPTIONAL :: iq
+      LOGICAL,INTENT(IN),OPTIONAL :: lprintinfo
+      !
+      ! Workspace
+      !
+      INTEGER,PARAMETER :: default_iq = 1
+      LOGICAL,PARAMETER :: default_lprintinfo = .TRUE.
+      INTEGER :: iq_
+      LOGICAL :: lprintinfo_
+      CHARACTER(LEN=9) :: label_i
+      REAL(DP),EXTERNAL :: GET_CLOCK
+      REAL(DP) :: time_spent(2)
+      CHARACTER(20),EXTERNAL :: human_readable_time
+      INTEGER :: n_eigen_to_get
+      INTEGER :: tmp_n_pdep_eigen
+      INTEGER :: global_j,local_j
+      REAL(DP),ALLOCATABLE :: tmp_ev(:)
+      TYPE(json_file) :: json
+      INTEGER :: n_elements,ielement,myiq
+      LOGICAL :: found
+      INTEGER,ALLOCATABLE :: ilen(:)
+      CHARACTER(LEN=:),ALLOCATABLE :: eigenpot_filename(:)
+      CHARACTER(LEN=:),ALLOCATABLE :: fname
+      !
+      ! Assign defaut to optional parameters
+      !
+      IF(PRESENT(iq)) THEN
+         iq_ = iq
+      ELSE
+         iq_ = default_iq
+      ENDIF
+      IF(PRESENT(lprintinfo)) THEN
+         lprintinfo_ = lprintinfo
+      ELSE
+         lprintinfo_ = default_lprintinfo
+      ENDIF
+      !
+      ! MPI barrier
+      !
+      !CALL mp_barrier(world_comm)
+      !
+      CALL start_clock('tmp_pdep_db')
+      !
+      ! Timing
+      !
+      time_spent(1) = get_clock('tmp_pdep_db')
+      !
+      ! 1) READ THE INPUT FILE
+      !
+      IF(mpime == root) THEN
+         !
+         CALL json%initialize()
+         CALL json%load(filename=TRIM(wstat_save_dir)//'/summary.json')
+         IF(json%failed()) THEN
+            CALL errore('pdep_db_read','Cannot open file: '//TRIM(wstat_save_dir)//'/summary.json',1)
+         ENDIF
+         !
+         CALL json%info('dielectric_matrix.pdep',n_children=n_elements)
+         !
+         DO ielement = 1,n_elements
+            WRITE(label_i,'(i9)') ielement
+            CALL json%get('dielectric_matrix.pdep('//label_i//').iq',myiq,found)
+            IF(found) THEN
+               IF(myiq /= iq_) CYCLE
+               CALL json%get('dielectric_matrix.pdep('//label_i//').eigenval',tmp_ev)
+               CALL json%get('dielectric_matrix.pdep('//label_i//').eigenvec',eigenpot_filename,ilen=ilen)
+               tmp_n_pdep_eigen = SIZE(tmp_ev,1)
+               EXIT
+            ENDIF
+         ENDDO
+         !
+         CALL json%destroy()
+         !
+      ENDIF
+      !
+      CALL mp_bcast(tmp_n_pdep_eigen,root,world_comm)
+      !
+      ! In case nglob_to_be_read is 0, overwrite it with the read value
+      !
+      IF(nglob_to_be_read == 0) THEN
+         n_eigen_to_get = tmp_n_pdep_eigen
+         n_pdep_eigen = tmp_n_pdep_eigen
+      ELSE
+         n_eigen_to_get = MIN(tmp_n_pdep_eigen,nglob_to_be_read)
+      ENDIF
+      !
+      ! 2) READ THE EIGENVALUES FILE
+      !
+      IF(.NOT. ALLOCATED(ev)) ALLOCATE(ev(n_eigen_to_get))
+      IF(mpime == root) ev(1:nglob_to_be_read) = tmp_ev(1:nglob_to_be_read)
+      CALL mp_bcast(ev,root,world_comm)
+      !
+      IF(.NOT. ALLOCATED(eigenpot_filename)) ALLOCATE(CHARACTER(LEN=25) :: eigenpot_filename(n_eigen_to_get))
+      DO ielement = 1,n_eigen_to_get
+         CALL mp_bcast(eigenpot_filename(ielement),root,world_comm)
+      ENDDO
+      !
+      ! 3) READ THE EIGENVECTOR FILES
+      !
+      IF(.NOT. ALLOCATED(dvg)) THEN
+         ALLOCATE(dvg(npwqx,n_eigen_to_get))
+         dvg = 0._DP
+      ENDIF
+      !
+      DO local_j = 1,n_eigen_to_get
+         !
+         ! local -> global
+         !
+         global_j = local_j
+         IF(global_j > n_eigen_to_get) CYCLE
+         !
+         fname = TRIM(wstat_save_dir)//'/'//TRIM(ADJUSTL(eigenpot_filename(global_j)))
+         CALL pdep_read_G_and_distribute(fname,dvg(:,local_j),iq_)
+         !
+      ENDDO
+      !
+      ! MPI barrier
+      !
+      !CALL mp_barrier(world_comm)
+      !
+      ! Timing
+      !
+      time_spent(2) = get_clock('tmp_pdep_db')
+      CALL stop_clock('tmp_pdep_db')
+      !
+      IF(lprintinfo_) THEN
+         WRITE(stdout,*)
+         CALL io_push_bar()
+         WRITE(stdout,'(5x,"SAVE read in ",a)') TRIM(human_readable_time(time_spent(2)-time_spent(1)))
+         WRITE(stdout,'(5x,"In location : ",a)') TRIM(wstat_save_dir)
+         WRITE(stdout,'(5x,"Eigen. found : ",i12)') n_eigen_to_get
+         CALL io_push_bar()
+      ENDIF
+      !
+      IF(ALLOCATED(eigenpot_filename)) DEALLOCATE(eigenpot_filename)
+      IF(ALLOCATED(fname)) DEALLOCATE(fname)
+      !
+    END SUBROUTINE
+    !  
 END MODULE

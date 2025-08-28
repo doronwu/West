@@ -22,7 +22,7 @@ SUBROUTINE wbse_setup()
                                  & n_liouville_maxiter,n_liouville_read_from_file,&
                                  & trev_liouville_rel,trev_liouville,alphapv_dfpt,l_use_ecutrho,&
                                  & wbse_save_dir,l_hybrid_tddft,l_spin_flip,l_spin_flip_kernel,&
-                                 & do_inexact_krylov
+                                 & do_forces,do_inexact_krylov
   USE kinds,                ONLY : DP
   USE mp_global,            ONLY : npool
   USE types_coulomb,        ONLY : pot3D
@@ -136,6 +136,7 @@ SUBROUTINE wbse_setup()
   ELSE
      !
      CALL pot3D%init('Rho',.FALSE.,'gb')
+     !CALL pot3D%init('Wave',.FALSE.,'default')
      !
   ENDIF
   !
@@ -155,6 +156,7 @@ SUBROUTINE wbse_setup()
   !
   IF(l_bse .OR. l_hybrid_tddft) CALL bse_start()
   !
+  do_forces = .FALSE.
   do_inexact_krylov = .FALSE.
   !
 END SUBROUTINE

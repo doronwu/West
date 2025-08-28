@@ -345,6 +345,7 @@ MODULE wbse_center
   REAL(DP) :: wbse_epsinfty
   CHARACTER(LEN=1) :: spin_excitation
   LOGICAL :: l_forces
+  LOGICAL :: do_forces
   INTEGER :: forces_state
   REAL(DP) :: forces_zeq_cg_tr
   INTEGER :: forces_zeq_n_cg_maxiter

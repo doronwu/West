@@ -11,6 +11,159 @@
 ! Yu Jin
 !
 !-----------------------------------------------------------------------
+SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
+  !-----------------------------------------------------------------------
+  !
+  ! \sum_{v'} (\int v_c \phi_{v'} \phi_{v}) a_{v'}
+  !
+  USE kinds,                 ONLY : DP
+  USE cell_base,             ONLY : omega
+  USE fft_base,              ONLY : dffts
+  USE types_coulomb,         ONLY : pot3D
+  USE mp,                    ONLY : mp_bcast
+  USE fft_at_gamma,          ONLY : single_fwfft_gamma,double_invfft_gamma
+  USE mp_global,             ONLY : inter_image_comm,my_image_id
+  USE pwcom,                 ONLY : npw,npwx,isk,ngk
+  USE westcom,               ONLY : nbndval0x,nbnd_occ,iuwfc,lrwfc,n_trunc_bands
+  USE exx,                   ONLY : exxalfa
+  USE buffers,               ONLY : get_buffer
+  USE distribution_center,   ONLY : kpt_pool,band_group
+  USE wavefunctions,         ONLY : evc,psic
+  !
+  IMPLICIT NONE
+  !
+  ! I/O
+  !
+  INTEGER, INTENT(IN) :: current_spin
+  COMPLEX(DP), INTENT(IN) :: evc1(npwx,nbndval0x-n_trunc_bands)
+  LOGICAL, INTENT(IN) :: sf
+  COMPLEX(DP), INTENT(INOUT) :: hybrid_kd1(npwx,band_group%nlocx)
+  !
+  ! Workspace
+  !
+  INTEGER :: lbnd, ibnd, ibndp, jbnd, jbndp, ir, ig
+  INTEGER :: current_spin_ikq, ikq, nbndval, nbnd_do
+  INTEGER :: dffts_nnr
+  COMPLEX(DP), ALLOCATABLE :: aux_hybrid1(:,:)
+  COMPLEX(DP), ALLOCATABLE :: caux(:), gaux(:), raux(:)
+  !$acc declare device_resident(aux_hybrid1,caux,gaux,raux)
+  !
+#if defined(__CUDA)
+  CALL start_clock_gpu('hybrid_k1')
+#else
+  CALL start_clock('hybrid_k1')
+#endif
+  !
+  IF(sf) CALL errore('hybrid_kernel_term1', 'spin-flip is not supported', 1)
+  !
+  dffts_nnr = dffts%nnr
+  !
+  ALLOCATE(aux_hybrid1(npwx,band_group%nloc))
+  ALLOCATE(caux(dffts%nnr))
+  ALLOCATE(gaux(npwx))
+  ALLOCATE(raux(dffts%nnr))
+  !
+  DO ikq = 1,kpt_pool%nloc
+     !
+     current_spin_ikq = isk(ikq)
+     IF(current_spin_ikq /= current_spin) CYCLE
+     !
+     nbndval = nbnd_occ(ikq)
+     !
+     nbnd_do = 0
+     DO lbnd = 1,band_group%nloc
+        ibnd = band_group%l2g(lbnd)+n_trunc_bands
+        IF(ibnd > n_trunc_bands .AND. ibnd <= nbndval) nbnd_do = nbnd_do+1
+     ENDDO
+     !
+     ! ... Number of G vectors for PW expansion of wfs at k
+     !
+     npw = ngk(ikq)
+     !
+     IF(kpt_pool%nloc > 1) THEN
+        IF(my_image_id == 0) CALL get_buffer(evc,lrwfc,iuwfc,ikq)
+        CALL mp_bcast(evc,0,inter_image_comm)
+        !$acc update device(evc)
+     ENDIF
+     !
+     DO lbnd = 1, nbnd_do ! index to be left
+        !
+        ibnd = band_group%l2g(lbnd)
+        ibndp = ibnd + n_trunc_bands
+        !
+        !$acc kernels present(raux)
+        raux(:) = (0._DP,0._DP)
+        !$acc end kernels
+        !
+        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+           !
+           jbndp = jbnd + n_trunc_bands
+           !
+           ! product of evc and evc
+           !
+           CALL double_invfft_gamma(dffts,npw,npwx,evc(:,jbndp),evc(:,ibndp),psic,'Wave')
+           !
+           !$acc parallel loop present(caux)
+           DO ir = 1, dffts_nnr
+              caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
+           ENDDO
+           !$acc end parallel
+           !
+           ! Apply the bare Coulomb potential
+           !
+           CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
+           !
+           !$acc parallel loop present(gaux,pot3D)
+           DO ig = 1, npw
+              gaux(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           ENDDO
+           !$acc end parallel
+           !
+           CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc1(:,jbnd),caux,'Wave')
+           !
+           !$acc parallel loop present(caux)
+           DO ir = 1, dffts_nnr
+              psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
+           ENDDO
+           !$acc end parallel
+           !
+           !$acc parallel loop present(raux)
+           DO ir = 1, dffts_nnr
+              raux(ir) = raux(ir)+psic(ir)
+           ENDDO
+           !$acc end parallel
+           !
+        ENDDO
+        !
+        CALL single_fwfft_gamma(dffts,npw,npwx,raux,aux_hybrid1(:,lbnd),'Wave')
+        !
+     ENDDO
+     !
+     !$acc parallel loop collapse(2) present(hybrid_kd1,aux_hybrid1)
+     DO lbnd = 1, nbnd_do
+        DO ig = 1, npw
+           hybrid_kd1(ig,lbnd) = hybrid_kd1(ig,lbnd) - aux_hybrid1(ig,lbnd) * exxalfa
+        ENDDO
+     ENDDO
+     !$acc end parallel
+     !
+  ENDDO
+  !
+  !$acc exit data delete(aux_hybrid1,caux,gaux,raux)
+  DEALLOCATE(aux_hybrid1)
+  DEALLOCATE(caux)
+  DEALLOCATE(gaux)
+  DEALLOCATE(raux)
+  !
+#if defined(__CUDA)
+  CALL stop_clock_gpu('hybrid_k1')
+#else
+  CALL stop_clock('hybrid_k1')
+#endif
+  !
+END SUBROUTINE
+!
+!-----------------------------------------------------------------------
 SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
   !-----------------------------------------------------------------------
   !
@@ -486,6 +639,224 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
   CALL stop_clock_gpu('hybrid_k4')
 #else
   CALL stop_clock('hybrid_k4')
+#endif
+  !
+END SUBROUTINE
+
+!
+!-----------------------------------------------------------------------
+SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
+  !-----------------------------------------------------------------------
+  !
+  ! \sum_{v'} (\int W a_{v'} a_{v}) \phi_{v'}
+  !
+  USE kinds,                 ONLY : DP
+  USE cell_base,             ONLY : omega
+  USE fft_base,              ONLY : dffts
+  USE noncollin_module,      ONLY : npol
+  USE types_coulomb,         ONLY : pot3D
+  USE mp,                    ONLY : mp_bcast,mp_sum
+  USE fft_at_gamma,          ONLY : single_fwfft_gamma,double_invfft_gamma
+  USE mp_global,             ONLY : inter_image_comm,my_image_id,intra_bgrp_comm
+  USE pwcom,                 ONLY : npw,npwx,isk,ngk
+  USE westcom,               ONLY : ev,dvg,n_pdep_eigen_to_use,npwqx,spin_channel,&
+                                   & nbnd_occ,iuwfc,lrwfc,n_trunc_bands,evc1_all
+  USE exx,                   ONLY : exxalfa
+  USE buffers,               ONLY : get_buffer
+  USE distribution_center,   ONLY : kpt_pool,band_group
+  USE pdep_db,               ONLY : tmp_pdep_db_read
+  USE wavefunctions,         ONLY : evc,psic
+  !
+  IMPLICIT NONE
+  !
+  ! I/O
+  !
+  INTEGER, INTENT(IN) :: current_spin
+  COMPLEX(DP), INTENT(IN) :: evc1(npwx,band_group%nlocx,kpt_pool%nloc)
+  LOGICAL, INTENT(IN) :: sf
+  COMPLEX(DP), INTENT(INOUT) :: bse_kd4(npwx,band_group%nlocx)
+  !
+  ! Workspace
+  !
+  INTEGER :: lbnd, ibnd, jbnd, jbndp, ir, ig, iks_do, ip, ip_g
+  INTEGER :: current_spin_ikq, ikq, nbndval, nbnd_do
+  INTEGER :: dffts_nnr
+  REAL(DP) :: factor
+  COMPLEX(DP), ALLOCATABLE :: aux_bse4(:,:)
+  COMPLEX(DP), ALLOCATABLE :: caux(:), gaux(:), raux(:), tau(:)
+  REAL(DP), ALLOCATABLE :: dotp(:)
+  INTEGER, PARAMETER :: flks(2) = [2,1]
+  !
+#if defined(__CUDA)
+  CALL start_clock_gpu('bse_k4')
+#else
+  CALL start_clock('bse_k4')
+#endif
+  !
+  dffts_nnr = dffts%nnr
+  !
+  ALLOCATE(dvg(npwqx,n_pdep_eigen_to_use))
+  ALLOCATE(ev(n_pdep_eigen_to_use))
+  !
+  CALL tmp_pdep_db_read(n_pdep_eigen_to_use)
+  !
+  ALLOCATE(aux_bse4(npwx,band_group%nloc))
+  ALLOCATE(caux(dffts%nnr))
+  ALLOCATE(gaux(npwx))
+  ALLOCATE(tau(npwx))
+  ALLOCATE(raux(dffts%nnr))
+  ALLOCATE(dotp(n_pdep_eigen_to_use))
+  !$acc enter data create(aux_bse4,caux,gaux,tau,raux,dotp)
+  !
+  DO ikq = 1,kpt_pool%nloc
+     !
+     current_spin_ikq = isk(ikq)
+     IF(current_spin_ikq /= current_spin) CYCLE
+     !
+     IF(sf) THEN
+        iks_do = flks(ikq)
+     ELSE
+        iks_do = ikq
+     ENDIF
+     !
+     nbndval = nbnd_occ(ikq)
+     !
+     nbnd_do = 0
+     DO lbnd = 1,band_group%nloc
+        ibnd = band_group%l2g(lbnd)+n_trunc_bands
+        IF(ibnd > n_trunc_bands .AND. ibnd <= nbndval) nbnd_do = nbnd_do+1
+     ENDDO
+     !
+     ! ... Number of G vectors for PW expansion of wfs at k
+     !
+     npw = ngk(ikq)
+     !
+     ! ... read in GS wavefunctions ikq
+     !
+     IF(kpt_pool%nloc > 1) THEN
+        IF(my_image_id == 0) CALL get_buffer(evc,lrwfc,iuwfc,ikq)
+        CALL mp_bcast(evc,0,inter_image_comm)
+        !$acc update device(evc)
+     ENDIF
+     !
+     DO lbnd = 1, nbnd_do ! index to be left
+        !
+        ibnd = band_group%l2g(lbnd)
+        !
+        !$acc kernels present(raux)
+        raux(:) = (0._DP,0._DP)
+        !$acc end kernels
+        !
+        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+           !
+           jbndp = jbnd + n_trunc_bands
+           !
+           ! product of evc1 and evc1
+           !
+           CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,ibnd,iks_do),evc1_all(:,jbnd,iks_do),&
+           & psic,'Wave')
+           !
+           !$acc parallel loop present(caux,psi)
+           DO ir = 1, dffts_nnr
+              caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
+           ENDDO
+           !$acc end parallel
+           !
+           ! Apply the bare Coulomb potential
+           !
+           CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
+           !
+           !$acc kernels present(tau)
+           tau(:) = (0._DP,0._DP)
+           !$acc end kernels
+           !
+           !$acc parallel loop present(tau,gaux,pot3D)
+           DO ig = 1, npw
+              tau(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           ENDDO
+           !$acc end parallel
+           !
+           !$acc parallel loop present(gaux,pot3D)
+           DO ig = 1,npw
+              gaux(ig) = gaux(ig) * pot3D%sqvc(ig)
+           ENDDO
+           !$acc end parallel
+           !
+           !$acc host_data use_device(gaux,dvg,dotp)
+           CALL glbrak_gamma(gaux,dvg,dotp,npw,npwx,1,n_pdep_eigen_to_use,1,npol)
+           !$acc end host_data
+           !
+           !$acc update host(dotp)
+           !
+           CALL mp_sum(dotp,intra_bgrp_comm)
+           !
+           !$acc kernels present(gaux)
+           gaux(:) = (0._DP,0._DP)
+           !$acc end kernels
+           !
+           DO ip = 1,n_pdep_eigen_to_use
+              !
+              ip_g = ip
+              factor = dotp(ip)*ev(ip_g)/(1._DP-ev(ip_g))
+              !
+              !$acc parallel loop present(gaux,dvg)
+              DO ig = 1,npw
+                 gaux(ig) = gaux(ig)+dvg(ig,ip)*factor
+              ENDDO
+              !$acc end parallel
+              !
+           ENDDO
+           !
+           !$acc parallel loop present(tau,gaux,pot3D)
+           DO ig = 1,npw
+              tau(ig) = tau(ig) + gaux(ig) * pot3D%sqvc(ig)
+           ENDDO
+           !$acc end parallel
+           !
+           CALL double_invfft_gamma(dffts,npw,npwx,tau,evc(:,jbndp),caux,'Wave')
+           !
+           !$acc parallel loop present(psic,caux)
+           DO ir = 1, dffts_nnr
+              psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
+           ENDDO
+           !$acc end parallel
+           !
+           !$acc parallel loop present(raux,psic)
+           DO ir = 1, dffts_nnr
+              raux(ir) = raux(ir)+psic(ir)
+           ENDDO
+           !$acc end parallel
+           !
+        ENDDO
+        !
+        CALL single_fwfft_gamma(dffts,npw,npwx,raux,aux_bse4(:,lbnd),'Wave')
+        !
+     ENDDO
+     !
+     !$acc parallel loop collapse(2) present(bse_kd4,aux_bse4)
+     DO lbnd = 1, nbnd_do
+        DO ig = 1, npw
+           bse_kd4(ig,lbnd) = bse_kd4(ig,lbnd) - aux_bse4(ig,lbnd)
+        ENDDO
+     ENDDO
+     !$acc end parallel
+     !
+  ENDDO
+  !
+  !$acc exit data delete(aux_bse4,dvg,tau,gaux,caux,dotp,raux)
+  DEALLOCATE(aux_bse4)
+  DEALLOCATE(caux)
+  DEALLOCATE(gaux)
+  DEALLOCATE(tau)
+  DEALLOCATE(dotp)
+  DEALLOCATE(raux)
+  DEALLOCATE(dvg)
+  DEALLOCATE(ev)
+  !
+#if defined(__CUDA)
+  CALL stop_clock_gpu('bse_k4')
+#else
+  CALL stop_clock('bse_k4')
 #endif
   !
 END SUBROUTINE

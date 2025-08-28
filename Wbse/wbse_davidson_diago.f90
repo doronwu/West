@@ -31,7 +31,7 @@ SUBROUTINE wbse_davidson_diago ( )
                                  & wstat_calculation,n_pdep_read_from_file,n_steps_write_restart,&
                                  & trev_pdep_rel,l_is_wstat_converged,nbnd_occ,lrwfc,iuwfc,dvg_exc,&
                                  & dng_exc,nbndval0x,n_trunc_bands,l_preconditioning,l_pre_shift,&
-                                 & l_spin_flip,l_forces,forces_state
+                                 & l_spin_flip,l_forces,do_forces,forces_state
   USE plep_db,              ONLY : plep_db_write,plep_db_read
   USE davidson_restart,     ONLY : davidson_restart_write,davidson_restart_clear,&
                                  & davidson_restart_read
@@ -554,6 +554,8 @@ SUBROUTINE wbse_davidson_diago ( )
   CALL stop_clock( 'chidiago' )
   !
   IF(l_forces) THEN
+     !
+     do_forces = .TRUE.
      !
      IF(.NOT. l_is_wstat_converged) &
      & CALL errore('chidiago','davidson not converged, cannot compute forces',1)
