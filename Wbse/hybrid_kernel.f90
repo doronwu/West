@@ -654,7 +654,7 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
   USE cell_base,             ONLY : omega
   USE fft_base,              ONLY : dffts
   USE noncollin_module,      ONLY : npol
-  USE types_coulomb,         ONLY : pot3D
+  USE types_coulomb,         ONLY : pot3D_x,pot3D_c
   USE mp,                    ONLY : mp_bcast,mp_sum
   USE fft_at_gamma,          ONLY : single_fwfft_gamma,double_invfft_gamma
   USE mp_global,             ONLY : inter_image_comm,my_image_id,intra_bgrp_comm
@@ -770,15 +770,15 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
            tau(:) = (0._DP,0._DP)
            !$acc end kernels
            !
-           !$acc parallel loop present(tau,gaux,pot3D)
+           !$acc parallel loop present(tau,gaux,pot3D_x,pot3D_x%sqvc)
            DO ig = 1, npw
-              tau(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+              tau(ig) = gaux(ig) * (pot3D_x%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
-           !$acc parallel loop present(gaux,pot3D)
+           !$acc parallel loop present(gaux,pot3D_c,pot3D_c%sqvc)
            DO ig = 1,npw
-              gaux(ig) = gaux(ig) * pot3D%sqvc(ig)
+              gaux(ig) = gaux(ig) * pot3D_c%sqvc(ig)
            ENDDO
            !$acc end parallel
            !
@@ -807,9 +807,9 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
               !
            ENDDO
            !
-           !$acc parallel loop present(tau,gaux,pot3D)
+           !$acc parallel loop present(tau,gaux,pot3D_c,pot3D_c%sqvc)
            DO ig = 1,npw
-              tau(ig) = tau(ig) + gaux(ig) * pot3D%sqvc(ig)
+              tau(ig) = tau(ig) + gaux(ig) * pot3D_c%sqvc(ig)
            ENDDO
            !$acc end parallel
            !

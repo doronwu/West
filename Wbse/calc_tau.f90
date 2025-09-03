@@ -194,8 +194,7 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   ELSE
      !
      CALL pot3D_x%init('Rho',.FALSE.,'gb')
-     !CALL pot3D_c%init('Wave',.FALSE.,'default')
-     CALL pot3D_c%init('Rho',.FALSE.,'gb')
+     CALL pot3D_c%init('Wave',.FALSE.,'default')
      !
      !$acc enter data copyin(pot3D_x)
      !$acc enter data copyin(pot3D_x%sqvc)
