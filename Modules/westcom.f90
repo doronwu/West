@@ -362,6 +362,7 @@ MODULE wbse_center
   LOGICAL :: l_davidson
   LOGICAL :: l_bse_triplet
   INTEGER :: n_tau
+  REAL(DP) :: sigma_head
   REAL(DP) :: sigma_c_head
   REAL(DP) :: sigma_x_head
   LOGICAL :: do_inexact_krylov

@@ -29,7 +29,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
   USE fft_at_gamma,         ONLY : single_fwfft_gamma,single_invfft_gamma,double_fwfft_gamma,&
                                  & double_invfft_gamma
   USE westcom,              ONLY : l_bse,l_bse_triplet,l_hybrid_tddft,l_spin_flip_kernel,&
-                                 & l_qp_correction,sigma_c_head,sigma_x_head,nbnd_occ,scissor_ope,&
+                                 & l_qp_correction,sigma_head,sigma_c_head,sigma_x_head,nbnd_occ,scissor_ope,&
                                  & n_trunc_bands,et_qp,lrwfc,iuwfc,evc1_all,forces_inexact_krylov,&
                                  & do_forces,do_inexact_krylov
   USE distribution_center,  ONLY : kpt_pool,band_group
@@ -256,7 +256,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
      !
      IF(do_forces) THEN
         IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
-           factor = sigma_x_head*exxalfa
+           factor = sigma_head*exxalfa
         ELSE
            factor = 0._DP
         ENDIF
@@ -264,7 +264,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
         IF(l_bse) THEN
            factor = -scissor_ope+sigma_x_head+sigma_c_head
         ELSEIF(l_hybrid_tddft) THEN
-           factor = -scissor_ope+sigma_x_head*exxalfa
+           factor = -scissor_ope+sigma_head*exxalfa
         ELSE
            factor = -scissor_ope
         ENDIF

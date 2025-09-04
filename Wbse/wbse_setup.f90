@@ -225,11 +225,12 @@ SUBROUTINE bse_start()
   USE io_global,            ONLY : stdout
   USE pwcom,                ONLY : npwx
   USE westcom,              ONLY : tau_is_read,tau_all,n_tau,nbnd_occ,nbndval0x,n_trunc_bands,&
-                                 & sigma_c_head,sigma_x_head,wbse_epsinfty,l_local_repr,&
+                                 & sigma_head,sigma_c_head,sigma_x_head,wbse_epsinfty,l_local_repr,&
                                  & overlap_thr,u_matrix,ovl_matrix,n_bse_idx,idx_matrix,&
                                  & l_bse,l_hybrid_tddft
   USE constants,            ONLY : e2,pi
   USE types_coulomb,        ONLY : pot3D,pot3D_x,pot3D_c
+  USE xc_lib,               ONLY : xclib_dft_is
   USE wbse_io,              ONLY : read_umatrix_and_omatrix
   USE distribution_center,  ONLY : kpt_pool,band_group
   USE class_idistribute,    ONLY : idistribute,IDIST_BLK
@@ -247,7 +248,7 @@ SUBROUTINE bse_start()
   !
   IF (l_hybrid_tddft) THEN
      !
-     sigma_x_head = pot3D%div
+     sigma_head = pot3D%div
      !
   ELSEIF (l_bse) THEN
      !
@@ -259,6 +260,12 @@ SUBROUTINE bse_start()
      sigma_c_head = sigma_c_head * ((1._DP/wbse_epsinfty) - 1._DP)
      !
      WRITE(stdout,'(/,5X,"Macroscopic dielectric constant correction:",f9.5)') sigma_c_head
+     !
+     IF (xclib_dft_is('hybrid')) THEN
+        !
+        sigma_head = pot3D%div
+        !
+     ENDIF
      !
   ENDIF
   !
