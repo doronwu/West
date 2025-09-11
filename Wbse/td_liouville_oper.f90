@@ -319,7 +319,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
            IF(l_hybrid_tddft) THEN
               CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),evc1_new(:,:,iks),sf)
            ELSEIF(l_bse .AND. xclib_dft_is('hybrid')) THEN
-              CALL hybrid_kernel_term1(current_spin,evc1_new(:,:,iks),sf)
+              CALL hybrid_kernel_term1234(current_spin,evc1_new(:,:,iks),sf,1)
            ENDIF
         ELSE
            CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),evc1_new(:,:,iks),sf)
@@ -562,7 +562,7 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
      !
      ! K2d part. exx_div treatment is not needed for this part.
      !
-     IF(do_k2d) CALL hybrid_kernel_term2(current_spin,evc2_new,sf)
+     IF(do_k2d) CALL hybrid_kernel_term1234(current_spin,evc2_new,sf,2)
      !
      IF(gstart == 2) THEN
         !$acc parallel loop present(evc2_new)

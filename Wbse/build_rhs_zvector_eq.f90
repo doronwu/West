@@ -267,7 +267,7 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
      !
      IF(xclib_dft_is('hybrid')) THEN
         !
-        CALL hybrid_kernel_term3(current_spin,z_rhs_vec_part1(:,:,iks),l_spin_flip)
+        CALL hybrid_kernel_term1234(current_spin,z_rhs_vec_part1(:,:,iks),l_spin_flip,3)
         !
         IF(l_spin_flip) THEN
            iks_do = flks(iks)
@@ -288,7 +288,7 @@ SUBROUTINE rhs_zvector_part1( dvg_exc_tmp, dvgdvg_mat, drhox1, drhox2, z_rhs_vec
         IF(l_hybrid_tddft) THEN
            CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),z_rhs_vec_part1(:,:,iks),.FALSE.)
         ELSEIF(l_bse) THEN
-           CALL hybrid_kernel_term1(current_spin,z_rhs_vec_part1(:,:,iks),.FALSE.)
+           CALL hybrid_kernel_term1234(current_spin,z_rhs_vec_part1(:,:,iks),.FALSE.,1)
         ENDIF
         !
      ENDIF
@@ -1404,7 +1404,7 @@ SUBROUTINE rhs_zvector_part4( dvg_exc_tmp, z_rhs_vec )
      ! Compute the first part
      !
      IF((.NOT. l_bse) .AND. l_hybrid_tddft) THEN
-        CALL hybrid_kernel_term4(current_spin,z_rhs_vec_part4(:,:,iks),l_spin_flip)
+        CALL hybrid_kernel_term1234(current_spin,z_rhs_vec_part4(:,:,iks),l_spin_flip,4)
      ELSEIF(l_bse) THEN
         CALL bse_kernel_term4(current_spin,z_rhs_vec_part4(:,:,iks),l_spin_flip)
      ENDIF
