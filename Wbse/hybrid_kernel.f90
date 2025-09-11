@@ -11,7 +11,7 @@
 ! Yu Jin
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
+SUBROUTINE hybrid_kernel_term1(current_spin, hybrid_kd1, sf)
   !-----------------------------------------------------------------------
   !
   ! \sum_{v'} (\int v_c \phi_{v'} \phi_{v}) a_{v'}
@@ -24,7 +24,7 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
   USE fft_at_gamma,          ONLY : single_fwfft_gamma,double_invfft_gamma
   USE mp_global,             ONLY : inter_image_comm,my_image_id
   USE pwcom,                 ONLY : npw,npwx,isk,ngk
-  USE westcom,               ONLY : nbndval0x,nbnd_occ,iuwfc,lrwfc,n_trunc_bands
+  USE westcom,               ONLY : nbnd_occ,iuwfc,lrwfc,n_trunc_bands,evc1_all
   USE exx,                   ONLY : exxalfa
   USE buffers,               ONLY : get_buffer
   USE distribution_center,   ONLY : kpt_pool,band_group
@@ -35,7 +35,6 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
   ! I/O
   !
   INTEGER, INTENT(IN) :: current_spin
-  COMPLEX(DP), INTENT(IN) :: evc1(npwx,nbndval0x-n_trunc_bands)
   LOGICAL, INTENT(IN) :: sf
   COMPLEX(DP), INTENT(INOUT) :: hybrid_kd1(npwx,band_group%nlocx)
   !
@@ -46,7 +45,6 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
   INTEGER :: dffts_nnr
   COMPLEX(DP), ALLOCATABLE :: aux_hybrid1(:,:)
   COMPLEX(DP), ALLOCATABLE :: caux(:), gaux(:), raux(:)
-  !$acc declare device_resident(aux_hybrid1,caux,gaux,raux)
   !
 #if defined(__CUDA)
   CALL start_clock_gpu('hybrid_k1')
@@ -54,7 +52,7 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
   CALL start_clock('hybrid_k1')
 #endif
   !
-  IF(sf) CALL errore('hybrid_kernel_term1', 'spin-flip is not supported', 1)
+  IF(sf) CALL errore('hybrid_kernel_term1','spin-flip is not supported',1)
   !
   dffts_nnr = dffts%nnr
   !
@@ -62,6 +60,7 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
   ALLOCATE(caux(dffts%nnr))
   ALLOCATE(gaux(npwx))
   ALLOCATE(raux(dffts%nnr))
+  !$acc enter data create(aux_hybrid1,caux,gaux,raux)
   !
   DO ikq = 1,kpt_pool%nloc
      !
@@ -86,25 +85,25 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
         !$acc update device(evc)
      ENDIF
      !
-     DO lbnd = 1, nbnd_do ! index to be left
+     DO lbnd = 1,nbnd_do ! index to be left
         !
         ibnd = band_group%l2g(lbnd)
-        ibndp = ibnd + n_trunc_bands
+        ibndp = ibnd+n_trunc_bands
         !
         !$acc kernels present(raux)
         raux(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+        DO jbnd = 1,nbndval-n_trunc_bands ! index to be summed
            !
-           jbndp = jbnd + n_trunc_bands
+           jbndp = jbnd+n_trunc_bands
            !
            ! product of evc and evc
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc(:,jbndp),evc(:,ibndp),psic,'Wave')
            !
-           !$acc parallel loop present(caux)
-           DO ir = 1, dffts_nnr
+           !$acc parallel loop present(caux,psic)
+           DO ir = 1,dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
            !$acc end parallel
@@ -113,22 +112,22 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
            !
            CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
            !
-           !$acc parallel loop present(gaux,pot3D)
-           DO ig = 1, npw
-              gaux(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           !$acc parallel loop present(gaux,pot3D,pot3D%sqvc)
+           DO ig = 1,npw
+              gaux(ig) = gaux(ig)*(pot3D%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
-           CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc1(:,jbnd),caux,'Wave')
+           CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc1_all(:,jbnd,ikq),caux,'Wave')
            !
-           !$acc parallel loop present(caux)
-           DO ir = 1, dffts_nnr
+           !$acc parallel loop present(psic,caux)
+           DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
-           !$acc parallel loop present(raux)
-           DO ir = 1, dffts_nnr
+           !$acc parallel loop present(raux,psic)
+           DO ir = 1,dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
            !$acc end parallel
@@ -140,9 +139,9 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
      ENDDO
      !
      !$acc parallel loop collapse(2) present(hybrid_kd1,aux_hybrid1)
-     DO lbnd = 1, nbnd_do
-        DO ig = 1, npw
-           hybrid_kd1(ig,lbnd) = hybrid_kd1(ig,lbnd) - aux_hybrid1(ig,lbnd) * exxalfa
+     DO lbnd = 1,nbnd_do
+        DO ig = 1,npw
+           hybrid_kd1(ig,lbnd) = hybrid_kd1(ig,lbnd)-aux_hybrid1(ig,lbnd)*exxalfa
         ENDDO
      ENDDO
      !$acc end parallel
@@ -164,7 +163,7 @@ SUBROUTINE hybrid_kernel_term1(current_spin, evc1, hybrid_kd1, sf)
 END SUBROUTINE
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
+SUBROUTINE hybrid_kernel_term2(current_spin, hybrid_kd2, sf)
   !-----------------------------------------------------------------------
   !
   ! \sum_{v'} (\int v_c a_{v'} \phi_{v}) \phi_{v'}
@@ -188,7 +187,6 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
   ! I/O
   !
   INTEGER, INTENT(IN) :: current_spin
-  COMPLEX(DP), INTENT(IN) :: evc1(npwx,band_group%nlocx,kpt_pool%nloc)
   LOGICAL, INTENT(IN) :: sf
   COMPLEX(DP), INTENT(INOUT) :: hybrid_kd2(npwx,band_group%nlocx)
   !
@@ -206,7 +204,7 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
   CALL start_clock('hybrid_k2')
 #endif
   !
-  IF(sf) CALL errore('hybrid_kernel_term2', 'spin-flip is not supported', 1)
+  IF(sf) CALL errore('hybrid_kernel_term2','spin-flip is not supported',1)
   !
   dffts_nnr = dffts%nnr
   !
@@ -239,25 +237,25 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
         !$acc update device(evc)
      ENDIF
      !
-     DO lbnd = 1, nbnd_do ! index to be left
+     DO lbnd = 1,nbnd_do ! index to be left
         !
         ibnd = band_group%l2g(lbnd)
-        ibndp = ibnd + n_trunc_bands
+        ibndp = ibnd+n_trunc_bands
         !
         !$acc kernels present(raux)
         raux(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+        DO jbnd = 1,nbndval-n_trunc_bands ! index to be summed
            !
-           jbndp = jbnd + n_trunc_bands
+           jbndp = jbnd+n_trunc_bands
            !
            ! product of evc1 and evc
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,jbnd,ikq),evc(:,ibndp),psic,'Wave')
            !
            !$acc parallel loop present(caux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
            !$acc end parallel
@@ -267,21 +265,21 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
            CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
            !
            !$acc parallel loop present(gaux,pot3D,pot3D%sqvc)
-           DO ig = 1, npw
-              gaux(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           DO ig = 1,npw
+              gaux(ig) = gaux(ig)*(pot3D%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc(:,jbndp),caux,'Wave')
            !
            !$acc parallel loop present(psic,caux)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
            !$acc parallel loop present(raux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
            !$acc end parallel
@@ -293,9 +291,9 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
      ENDDO
      !
      !$acc parallel loop collapse(2) present(hybrid_kd2,aux_hybrid2)
-     DO lbnd = 1, nbnd_do
-        DO ig = 1, npw
-           hybrid_kd2(ig,lbnd) = hybrid_kd2(ig,lbnd) - aux_hybrid2(ig,lbnd) * exxalfa
+     DO lbnd = 1,nbnd_do
+        DO ig = 1,npw
+           hybrid_kd2(ig,lbnd) = hybrid_kd2(ig,lbnd)-aux_hybrid2(ig,lbnd)*exxalfa
         ENDDO
      ENDDO
      !$acc end parallel
@@ -317,7 +315,7 @@ SUBROUTINE hybrid_kernel_term2(current_spin, evc1, hybrid_kd2, sf)
 END SUBROUTINE
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
+SUBROUTINE hybrid_kernel_term3(current_spin, hybrid_kd3, sf)
   !-----------------------------------------------------------------------
   !
   ! \sum_{v'} (\int v_c a_{v'} \phi_{v}) a_{v'}
@@ -341,7 +339,6 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
   ! I/O
   !
   INTEGER, INTENT(IN) :: current_spin
-  COMPLEX(DP), INTENT(IN) :: evc1(npwx,band_group%nlocx,kpt_pool%nloc)
   LOGICAL, INTENT(IN) :: sf
   COMPLEX(DP), INTENT(INOUT) :: hybrid_kd3(npwx,band_group%nlocx)
   !
@@ -400,23 +397,23 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
         !$acc update device(evc)
      ENDIF
      !
-     DO lbnd = 1, nbnd_do ! index to be left
+     DO lbnd = 1,nbnd_do ! index to be left
         !
         ibnd = band_group%l2g(lbnd)
-        ibndp = ibnd + n_trunc_bands
+        ibndp = ibnd+n_trunc_bands
         !
         !$acc kernels present(raux)
         raux(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        DO jbnd = 1, flnbndval - n_trunc_bands ! index to be summed
+        DO jbnd = 1,flnbndval-n_trunc_bands ! index to be summed
            !
            ! product of evc1 and evc
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,jbnd,ikq),evc(:,ibndp),psic,'Wave')
            !
            !$acc parallel loop present(caux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
            !$acc end parallel
@@ -426,21 +423,21 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
            CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
            !
            !$acc parallel loop present(gaux,pot3D,pot3D%sqvc)
-           DO ig = 1, npw
-              gaux(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           DO ig = 1,npw
+              gaux(ig) = gaux(ig)*(pot3D%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc1_all(:,jbnd,ikq),caux,'Wave')
            !
            !$acc parallel loop present(psic,caux)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
            !$acc parallel loop present(raux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
            !$acc end parallel
@@ -460,9 +457,9 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
      ENDDO
      !
      !$acc parallel loop collapse(2) present(hybrid_kd3,aux_hybrid3)
-     DO lbnd = 1, nbnd_do
-        DO ig = 1, npw
-           hybrid_kd3(ig,lbnd) = hybrid_kd3(ig,lbnd) - aux_hybrid3(ig,lbnd) * exxalfa
+     DO lbnd = 1,nbnd_do
+        DO ig = 1,npw
+           hybrid_kd3(ig,lbnd) = hybrid_kd3(ig,lbnd)-aux_hybrid3(ig,lbnd)*exxalfa
         ENDDO
      ENDDO
      !$acc end parallel
@@ -484,7 +481,7 @@ SUBROUTINE hybrid_kernel_term3(current_spin, evc1, hybrid_kd3, sf)
 END SUBROUTINE
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
+SUBROUTINE hybrid_kernel_term4(current_spin, hybrid_kd4, sf)
   !-----------------------------------------------------------------------
   !
   ! \sum_{v'} (\int v_c a_{v'} a_{v}) \phi_{v'}
@@ -508,7 +505,6 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
   ! I/O
   !
   INTEGER, INTENT(IN) :: current_spin
-  COMPLEX(DP), INTENT(IN) :: evc1(npwx,band_group%nlocx,kpt_pool%nloc)
   LOGICAL, INTENT(IN) :: sf
   COMPLEX(DP), INTENT(INOUT) :: hybrid_kd4(npwx,band_group%nlocx)
   !
@@ -566,7 +562,7 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
         !$acc update device(evc)
      ENDIF
      !
-     DO lbnd = 1, nbnd_do ! index to be left
+     DO lbnd = 1,nbnd_do ! index to be left
         !
         ibnd = band_group%l2g(lbnd)
         !
@@ -574,9 +570,9 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
         raux(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+        DO jbnd = 1,nbndval-n_trunc_bands ! index to be summed
            !
-           jbndp = jbnd + n_trunc_bands
+           jbndp = jbnd+n_trunc_bands
            !
            ! product of evc1 and evc1
            !
@@ -584,7 +580,7 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
            & psic,'Wave')
            !
            !$acc parallel loop present(caux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
            !$acc end parallel
@@ -594,21 +590,21 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
            CALL single_fwfft_gamma(dffts,npw,npwx,caux,gaux,'Wave')
            !
            !$acc parallel loop present(gaux,pot3D,pot3D%sqvc)
-           DO ig = 1, npw
-              gaux(ig) = gaux(ig) * (pot3D%sqvc(ig)**2)
+           DO ig = 1,npw
+              gaux(ig) = gaux(ig)*(pot3D%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
            CALL double_invfft_gamma(dffts,npw,npwx,gaux,evc(:,jbndp),caux,'Wave')
            !
            !$acc parallel loop present(psic,caux)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
            !$acc parallel loop present(raux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
            !$acc end parallel
@@ -620,9 +616,9 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
      ENDDO
      !
      !$acc parallel loop collapse(2) present(hybrid_kd4,aux_hybrid4)
-     DO lbnd = 1, nbnd_do
-        DO ig = 1, npw
-           hybrid_kd4(ig,lbnd) = hybrid_kd4(ig,lbnd) - aux_hybrid4(ig,lbnd) * exxalfa
+     DO lbnd = 1,nbnd_do
+        DO ig = 1,npw
+           hybrid_kd4(ig,lbnd) = hybrid_kd4(ig,lbnd)-aux_hybrid4(ig,lbnd)*exxalfa
         ENDDO
      ENDDO
      !$acc end parallel
@@ -642,10 +638,9 @@ SUBROUTINE hybrid_kernel_term4(current_spin, evc1, hybrid_kd4, sf)
 #endif
   !
 END SUBROUTINE
-
 !
 !-----------------------------------------------------------------------
-SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
+SUBROUTINE bse_kernel_term4(current_spin, bse_kd4, sf)
   !-----------------------------------------------------------------------
   !
   ! \sum_{v'} (\int W a_{v'} a_{v}) \phi_{v'}
@@ -659,12 +654,11 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
   USE fft_at_gamma,          ONLY : single_fwfft_gamma,double_invfft_gamma
   USE mp_global,             ONLY : inter_image_comm,my_image_id,intra_bgrp_comm
   USE pwcom,                 ONLY : npw,npwx,isk,ngk
-  USE westcom,               ONLY : ev,dvg,n_pdep_eigen_to_use,npwqx,spin_channel,&
-                                   & nbnd_occ,iuwfc,lrwfc,n_trunc_bands,evc1_all
-  USE exx,                   ONLY : exxalfa
+  USE westcom,               ONLY : ev,dvg,n_pdep_eigen_to_use,nbnd_occ,iuwfc,lrwfc,&
+                                  & n_trunc_bands,evc1_all
   USE buffers,               ONLY : get_buffer
   USE distribution_center,   ONLY : kpt_pool,band_group
-  USE pdep_db,               ONLY : tmp_pdep_db_read
+  USE pdep_db,               ONLY : pdep_db_read
   USE wavefunctions,         ONLY : evc,psic
   !
   IMPLICIT NONE
@@ -672,13 +666,12 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
   ! I/O
   !
   INTEGER, INTENT(IN) :: current_spin
-  COMPLEX(DP), INTENT(IN) :: evc1(npwx,band_group%nlocx,kpt_pool%nloc)
   LOGICAL, INTENT(IN) :: sf
   COMPLEX(DP), INTENT(INOUT) :: bse_kd4(npwx,band_group%nlocx)
   !
   ! Workspace
   !
-  INTEGER :: lbnd, ibnd, jbnd, jbndp, ir, ig, iks_do, ip, ip_g
+  INTEGER :: lbnd, ibnd, jbnd, jbndp, ir, ig, iks_do, ip
   INTEGER :: current_spin_ikq, ikq, nbndval, nbnd_do
   INTEGER :: dffts_nnr
   REAL(DP) :: factor
@@ -695,10 +688,8 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
   !
   dffts_nnr = dffts%nnr
   !
-  ALLOCATE(dvg(npwqx,n_pdep_eigen_to_use))
-  ALLOCATE(ev(n_pdep_eigen_to_use))
-  !
-  CALL tmp_pdep_db_read(n_pdep_eigen_to_use)
+  CALL pdep_db_read(n_pdep_eigen_to_use,lpara=.FALSE.)
+  !$acc enter data copyin(dvg)
   !
   ALLOCATE(aux_bse4(npwx,band_group%nloc))
   ALLOCATE(caux(dffts%nnr))
@@ -739,7 +730,7 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
         !$acc update device(evc)
      ENDIF
      !
-     DO lbnd = 1, nbnd_do ! index to be left
+     DO lbnd = 1,nbnd_do ! index to be left
         !
         ibnd = band_group%l2g(lbnd)
         !
@@ -747,17 +738,17 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
         raux(:) = (0._DP,0._DP)
         !$acc end kernels
         !
-        DO jbnd = 1, nbndval - n_trunc_bands ! index to be summed
+        DO jbnd = 1,nbndval-n_trunc_bands ! index to be summed
            !
-           jbndp = jbnd + n_trunc_bands
+           jbndp = jbnd+n_trunc_bands
            !
            ! product of evc1 and evc1
            !
            CALL double_invfft_gamma(dffts,npw,npwx,evc1_all(:,ibnd,iks_do),evc1_all(:,jbnd,iks_do),&
            & psic,'Wave')
            !
-           !$acc parallel loop present(caux,psi)
-           DO ir = 1, dffts_nnr
+           !$acc parallel loop present(caux,psic)
+           DO ir = 1,dffts_nnr
               caux(ir) = CMPLX(REAL(psic(ir),KIND=DP)*AIMAG(psic(ir))/omega,KIND=DP)
            ENDDO
            !$acc end parallel
@@ -771,20 +762,18 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
            !$acc end kernels
            !
            !$acc parallel loop present(tau,gaux,pot3D_x,pot3D_x%sqvc)
-           DO ig = 1, npw
-              tau(ig) = gaux(ig) * (pot3D_x%sqvc(ig)**2)
+           DO ig = 1,npw
+              tau(ig) = gaux(ig)*(pot3D_x%sqvc(ig)**2)
            ENDDO
            !$acc end parallel
            !
            !$acc parallel loop present(gaux,pot3D_c,pot3D_c%sqvc)
            DO ig = 1,npw
-              gaux(ig) = gaux(ig) * pot3D_c%sqvc(ig)
+              gaux(ig) = gaux(ig)*pot3D_c%sqvc(ig)
            ENDDO
            !$acc end parallel
            !
-           !$acc host_data use_device(gaux,dvg,dotp)
            CALL glbrak_gamma(gaux,dvg,dotp,npw,npwx,1,n_pdep_eigen_to_use,1,npol)
-           !$acc end host_data
            !
            !$acc update host(dotp)
            !
@@ -796,8 +785,7 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
            !
            DO ip = 1,n_pdep_eigen_to_use
               !
-              ip_g = ip
-              factor = dotp(ip)*ev(ip_g)/(1._DP-ev(ip_g))
+              factor = dotp(ip)*ev(ip)/(1._DP-ev(ip))
               !
               !$acc parallel loop present(gaux,dvg)
               DO ig = 1,npw
@@ -809,20 +797,20 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
            !
            !$acc parallel loop present(tau,gaux,pot3D_c,pot3D_c%sqvc)
            DO ig = 1,npw
-              tau(ig) = tau(ig) + gaux(ig) * pot3D_c%sqvc(ig)
+              tau(ig) = tau(ig)+gaux(ig)*pot3D_c%sqvc(ig)
            ENDDO
            !$acc end parallel
            !
            CALL double_invfft_gamma(dffts,npw,npwx,tau,evc(:,jbndp),caux,'Wave')
            !
            !$acc parallel loop present(psic,caux)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               psic(ir) = CMPLX(REAL(caux(ir),KIND=DP)*AIMAG(caux(ir)),KIND=DP)
            ENDDO
            !$acc end parallel
            !
            !$acc parallel loop present(raux,psic)
-           DO ir = 1, dffts_nnr
+           DO ir = 1,dffts_nnr
               raux(ir) = raux(ir)+psic(ir)
            ENDDO
            !$acc end parallel
@@ -834,24 +822,24 @@ SUBROUTINE bse_kernel_term4(current_spin, evc1, bse_kd4, sf)
      ENDDO
      !
      !$acc parallel loop collapse(2) present(bse_kd4,aux_bse4)
-     DO lbnd = 1, nbnd_do
-        DO ig = 1, npw
-           bse_kd4(ig,lbnd) = bse_kd4(ig,lbnd) - aux_bse4(ig,lbnd)
+     DO lbnd = 1,nbnd_do
+        DO ig = 1,npw
+           bse_kd4(ig,lbnd) = bse_kd4(ig,lbnd)-aux_bse4(ig,lbnd)
         ENDDO
      ENDDO
      !$acc end parallel
      !
   ENDDO
   !
-  !$acc exit data delete(aux_bse4,dvg,tau,gaux,caux,dotp,raux)
+  !$acc exit data delete(dvg,aux_bse4,caux,gaux,tau,dotp,raux)
+  DEALLOCATE(dvg)
+  DEALLOCATE(ev)
   DEALLOCATE(aux_bse4)
   DEALLOCATE(caux)
   DEALLOCATE(gaux)
   DEALLOCATE(tau)
   DEALLOCATE(dotp)
   DEALLOCATE(raux)
-  DEALLOCATE(dvg)
-  DEALLOCATE(ev)
   !
 #if defined(__CUDA)
   CALL stop_clock_gpu('bse_k4')

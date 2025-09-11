@@ -29,9 +29,9 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
   USE fft_at_gamma,         ONLY : single_fwfft_gamma,single_invfft_gamma,double_fwfft_gamma,&
                                  & double_invfft_gamma
   USE westcom,              ONLY : l_bse,l_bse_triplet,l_hybrid_tddft,l_spin_flip_kernel,&
-                                 & l_qp_correction,sigma_head,sigma_c_head,sigma_x_head,nbnd_occ,scissor_ope,&
-                                 & n_trunc_bands,et_qp,lrwfc,iuwfc,evc1_all,forces_inexact_krylov,&
-                                 & do_forces,do_inexact_krylov
+                                 & l_qp_correction,sigma_head,sigma_c_head,sigma_x_head,nbnd_occ,&
+                                 & scissor_ope,n_trunc_bands,et_qp,lrwfc,iuwfc,evc1_all,&
+                                 & forces_inexact_krylov,do_forces,do_inexact_krylov
   USE distribution_center,  ONLY : kpt_pool,band_group
   USE uspp_init,            ONLY : init_us_2
   USE exx,                  ONLY : exxalfa
@@ -104,7 +104,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
   ENDIF
   !
   IF(do_forces) THEN
-     IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
+     IF(xclib_dft_is('hybrid')) THEN
         do_k1d = .TRUE.
         IF(do_inexact_krylov) THEN
            IF(forces_inexact_krylov == 2 &
@@ -201,7 +201,8 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
            ENDDO
            !$acc end parallel
            !
-           CALL double_fwfft_gamma(dffts,npw,npwx,psic,evc1_new(:,lbnd,iks),evc1_new(:,lbnd+1,iks),'Wave')
+           CALL double_fwfft_gamma(dffts,npw,npwx,psic,evc1_new(:,lbnd,iks),evc1_new(:,lbnd+1,iks),&
+           & 'Wave')
            !
         ENDDO
         !
@@ -255,7 +256,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
      ! Subtract the eigenvalues
      !
      IF(do_forces) THEN
-        IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
+        IF(xclib_dft_is('hybrid')) THEN
            factor = sigma_head*exxalfa
         ELSE
            factor = 0._DP
@@ -270,9 +271,23 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
         ENDIF
      ENDIF
      !
-     IF(do_forces) THEN
+     IF(l_qp_correction .AND. .NOT. do_forces) THEN
         !
-        !$acc parallel loop present(factors)
+        !$acc parallel loop present(factors,et_qp)
+        DO lbnd = 1,nbnd_do
+           !
+           ! ibnd = band_group%l2g(lbnd)+n_trunc_bands
+           !
+           ibnd = band_group_myoffset+lbnd+n_trunc_bands
+           !
+           factors(lbnd) = et_qp(ibnd,iks_do)+factor
+           !
+        ENDDO
+        !$acc end parallel
+        !
+     ELSE
+        !
+        !$acc parallel loop present(factors,et)
         DO lbnd = 1,nbnd_do
            !
            ! ibnd = band_group%l2g(lbnd)+n_trunc_bands
@@ -284,44 +299,13 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
         ENDDO
         !$acc end parallel
         !
-     ELSE
-        !
-        IF(l_qp_correction) THEN
-           !
-           !$acc parallel loop present(factors,et_qp)
-           DO lbnd = 1,nbnd_do
-              !
-              ! ibnd = band_group%l2g(lbnd)+n_trunc_bands
-              !
-              ibnd = band_group_myoffset+lbnd+n_trunc_bands
-              !
-              factors(lbnd) = et_qp(ibnd,iks_do)+factor
-              !
-           ENDDO
-           !$acc end parallel
-           !
-        ELSE
-           !
-           !$acc parallel loop present(factors)
-           DO lbnd = 1,nbnd_do
-              !
-              ! ibnd = band_group%l2g(lbnd)+n_trunc_bands
-              !
-              ibnd = band_group_myoffset+lbnd+n_trunc_bands
-              !
-              factors(lbnd) = et(ibnd,iks_do)+factor
-              !
-           ENDDO
-           !$acc end parallel
-           !
-        ENDIF
-        !    
      ENDIF
      !
      !$acc parallel loop collapse(2) present(evc1_new,hevc1,factors,evc1)
      DO lbnd = 1,nbnd_do
         DO ig = 1,npw
-           evc1_new(ig,lbnd,iks) = evc1_new(ig,lbnd,iks)+hevc1(ig,lbnd)-factors(lbnd)*evc1(ig,lbnd,iks)
+           evc1_new(ig,lbnd,iks) = evc1_new(ig,lbnd,iks)+hevc1(ig,lbnd) &
+           & -factors(lbnd)*evc1(ig,lbnd,iks)
         ENDDO
      ENDDO
      !$acc end parallel
@@ -335,7 +319,7 @@ SUBROUTINE west_apply_liouvillian(evc1,evc1_new,sf)
            IF(l_hybrid_tddft) THEN
               CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),evc1_new(:,:,iks),sf)
            ELSEIF(l_bse .AND. xclib_dft_is('hybrid')) THEN
-              CALL hybrid_kernel_term1(current_spin,evc1_all(:,:,iks),evc1_new(:,:,iks),sf)
+              CALL hybrid_kernel_term1(current_spin,evc1_new(:,:,iks),sf)
            ENDIF
         ELSE
            CALL bse_kernel_gamma(current_spin,evc1_all(:,:,iks),evc1_new(:,:,iks),sf)
@@ -461,7 +445,7 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
   ENDIF
   !
   IF(do_forces) THEN
-     IF((l_bse .AND. xclib_dft_is('hybrid')) .OR. l_hybrid_tddft) THEN
+     IF(xclib_dft_is('hybrid')) THEN
         do_k2d = .TRUE.
         IF(do_inexact_krylov) THEN
            IF(forces_inexact_krylov == 3 &
@@ -533,7 +517,7 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
         !
         ! double bands @ gamma
         !
-        DO lbnd = 1, nbnd_do-MOD(nbnd_do,2),2
+        DO lbnd = 1,nbnd_do-MOD(nbnd_do,2),2
            !
            ibnd = band_group%l2g(lbnd)+n_trunc_bands
            jbnd = band_group%l2g(lbnd+1)+n_trunc_bands
@@ -573,12 +557,12 @@ SUBROUTINE west_apply_liouvillian_btda(evc1,evc1_new,sf)
      !
      ! The other part beyond TDA. exx_div treatment is not needed for this part.
      !
-     IF((.NOT. do_forces) .AND. l_bse) CALL errore('west_apply_liouvillian_btda', &
-                                                 & 'Only applies to forces', 1)
+     IF(l_bse .AND. .NOT. do_forces) &
+     & CALL errore('west_apply_liouvillian_btda','Only applies to forces',1)
      !
      ! K2d part. exx_div treatment is not needed for this part.
      !
-     IF(do_k2d) CALL hybrid_kernel_term2(current_spin,evc1,evc2_new,sf)
+     IF(do_k2d) CALL hybrid_kernel_term2(current_spin,evc2_new,sf)
      !
      IF(gstart == 2) THEN
         !$acc parallel loop present(evc2_new)

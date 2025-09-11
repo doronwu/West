@@ -116,7 +116,7 @@ SUBROUTINE wbse_setup()
   !
   IF(l_hybrid_tddft) THEN
      !
-     ! TD-hybrid-DFT
+     ! TDDFT, hybrid functional
      !
      IF(erfc_scrlen > 0._DP) THEN
         !
@@ -135,9 +135,7 @@ SUBROUTINE wbse_setup()
      !$acc enter data copyin(pot3D)
      !$acc enter data copyin(pot3D%sqvc)
      !
-     CALL pot3D%print_divergence()
-     !
-  ELSEIF (l_bse .AND. (.NOT. xclib_dft_is('hybrid'))) THEN
+  ELSEIF(l_bse) THEN
      !
      ! BSE, non-hybrid functional
      !
@@ -149,41 +147,28 @@ SUBROUTINE wbse_setup()
      !$acc enter data copyin(pot3D_c)
      !$acc enter data copyin(pot3D_c%sqvc)
      !
-     CALL pot3D_x%print_divergence()
-     CALL pot3D_c%print_divergence()
-     !
-  ELSEIF (l_bse .AND. xclib_dft_is('hybrid')) THEN
-     !
-     ! BSE, hybrid functional
-     !
-     CALL pot3D_x%init('Rho',.FALSE.,'gb')
-     CALL pot3D_c%init('Wave',.FALSE.,'default')
-     !
-     !$acc enter data copyin(pot3D_x)
-     !$acc enter data copyin(pot3D_x%sqvc)
-     !$acc enter data copyin(pot3D_c)
-     !$acc enter data copyin(pot3D_c%sqvc)
-     !
-     IF(erfc_scrlen > 0._DP) THEN
+     IF(xclib_dft_is('hybrid')) THEN
         !
-        ! HSE functional, mya = 1._DP, myb = -1._DP, mymu = erfc_scrlen
+        ! BSE, hybrid functional
         !
-        CALL pot3D%init('Rho',.FALSE.,'gb',mya=1._DP,myb=-1._DP,mymu=erfc_scrlen)
+        IF(erfc_scrlen > 0._DP) THEN
+           !
+           ! HSE functional, mya = 1._DP, myb = -1._DP, mymu = erfc_scrlen
+           !
+           CALL pot3D%init('Rho',.FALSE.,'gb',mya=1._DP,myb=-1._DP,mymu=erfc_scrlen)
+           !
+        ELSE
+           !
+           ! PBE0 functional, mya = 1._DP, myb = 0._DP, mymu = 1._DP to avoid divergence
+           !
+           CALL pot3D%init('Rho',.FALSE.,'gb',mya=1._DP,myb=0._DP,mymu=1._DP)
+           !
+        ENDIF
         !
-     ELSE
-        !
-        ! PBE0 functional, mya = 1._DP, myb = 0._DP, mymu = 1._DP to avoid divergence
-        !
-        CALL pot3D%init('Rho',.FALSE.,'gb',mya=1._DP,myb=0._DP,mymu=1._DP)
+        !$acc enter data copyin(pot3D)
+        !$acc enter data copyin(pot3D%sqvc)
         !
      ENDIF
-     !
-     !$acc enter data copyin(pot3D)
-     !$acc enter data copyin(pot3D%sqvc)
-     !
-     CALL pot3D%print_divergence()
-     CALL pot3D_x%print_divergence()
-     CALL pot3D_c%print_divergence()
      !
   ELSE
      !
@@ -193,8 +178,6 @@ SUBROUTINE wbse_setup()
      !
      !$acc enter data copyin(pot3D)
      !$acc enter data copyin(pot3D%sqvc)
-     !
-     CALL pot3D%print_divergence()
      !
   ENDIF
   !
@@ -246,11 +229,11 @@ SUBROUTINE bse_start()
   !
   ! the divergence term in Fock potential
   !
-  IF (l_hybrid_tddft) THEN
+  IF(l_hybrid_tddft) THEN
      !
      sigma_head = pot3D%div
      !
-  ELSEIF (l_bse) THEN
+  ELSEIF(l_bse) THEN
      !
      sigma_x_head = pot3D_x%div
      !
@@ -261,11 +244,7 @@ SUBROUTINE bse_start()
      !
      WRITE(stdout,'(/,5X,"Macroscopic dielectric constant correction:",f9.5)') sigma_c_head
      !
-     IF (xclib_dft_is('hybrid')) THEN
-        !
-        sigma_head = pot3D%div
-        !
-     ENDIF
+     IF(xclib_dft_is('hybrid')) sigma_head = pot3D%div
      !
   ENDIF
   !

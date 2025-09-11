@@ -25,7 +25,6 @@ SUBROUTINE solve_zvector_eq_cg(z_rhs, z_out)
   USE io_push,              ONLY : io_push_title
   USE distribution_center,  ONLY : kpt_pool,band_group
   USE mp_global,            ONLY : inter_image_comm
-  USE eqv,                  ONLY : dmuxc
   !
   IMPLICIT NONE
   !
@@ -75,7 +74,6 @@ SUBROUTINE solve_zvector_eq_cg(z_rhs, z_out)
   ALLOCATE(rz_new(nspin))
   ALLOCATE(rz_old(nspin))
   !
-  DEALLOCATE(dmuxc)
   CALL wbse_dv_setup(.FALSE.)
   !
   CALL wbse_dot(z_rhs,z_rhs,band_group%nlocx,dotp)
