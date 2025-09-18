@@ -1034,12 +1034,9 @@ wbse_control
    * - **Type**
      - string
    * - **Default**
-     - "None"
+     - "" (empty string)
    * - **Description**
-     - Available options are:
-
-       - "None" : Quasiparticle corrections are not added.
-       - Specify the name of the wfreq output file (in JSON format) from which quasiparticle corrections are read.
+     - Specify the name of the wfreq output file (in JSON format) from which QP corrections are read. If empty, QP corrections are not added.
 
 .. data:: scissor_ope
 

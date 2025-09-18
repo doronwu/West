@@ -11,7 +11,7 @@ assignees: ''
 A concise description of the problem.
 
 **Code version**
- - QE: 7.4.1
+ - QE: 7.5
  - WEST: 6.2.1
 
 **How to reproduce**
