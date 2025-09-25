@@ -6,9 +6,9 @@ Installation
 
 In order to install WEST you need to download `Quantum ESPRESSO 7.5 <https://gitlab.com/QEF/q-e/-/tags>`_.
 
-`Quantum ESPRESSO <http://www.quantum-espresso.org/>`_ (QE) is an integrated suite of open-source computer codes for electronic-structure calculations and materials modeling at the nanoscale, based on density-functional theory (DFT), plane waves (PW), and pseudopotentials (PP).
+`Quantum ESPRESSO <https://www.quantum-espresso.org/>`_ (QE) is an integrated suite of open-source computer codes for electronic-structure calculations and materials modeling at the nanoscale, based on density-functional theory (DFT), plane waves (PW), and pseudopotentials (PP).
 
-QE can be installed with HDF5 support. Currently the installation of QE with CMake is not supported by WEST. Configure QE by running the ``configure`` script that comes with the QE distribution. WEST requires `MPI <https://en.wikipedia.org/?title=Message_Passing_Interface>`_ support. `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ is recommended, but optional. For large-scale calculations, `ScaLAPACK <http://www.netlib.org/scalapack/>`_ and `ELPA <https://elpa.mpcdf.mpg.de/>`_ are also recommended. If all the environment variables (compilers, libraries etc.) have been set according to the QE configure guide, this would simply be:
+QE can be installed with HDF5 support. Currently the installation of QE with CMake is not supported by WEST. Configure QE by running the ``configure`` script that comes with the QE distribution. WEST requires `MPI <https://en.wikipedia.org/?title=Message_Passing_Interface>`_ support. `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ is recommended, but optional. For large-scale calculations, `ScaLAPACK <https://www.netlib.org/scalapack/>`_ and `ELPA <https://elpa.mpcdf.mpg.de/>`_ are also recommended. If all the environment variables (compilers, libraries etc.) have been set according to the QE configure guide, this would simply be:
 
 .. code-block:: bash
 
