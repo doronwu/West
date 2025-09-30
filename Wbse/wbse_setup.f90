@@ -24,6 +24,7 @@ SUBROUTINE wbse_setup()
                                  & wbse_save_dir,l_hybrid_tddft,l_spin_flip,l_spin_flip_kernel,&
                                  & do_inexact_krylov
   USE kinds,                ONLY : DP
+  USE mp_global,            ONLY : npool
   USE types_coulomb,        ONLY : pot3D
   USE wbse_dv,              ONLY : wbse_dv_setup,wbse_sf_kernel_setup
   USE xc_lib,               ONLY : xclib_dft_is
@@ -39,6 +40,13 @@ SUBROUTINE wbse_setup()
   COMPLEX(DP), EXTERNAL :: get_alpha_pv
   !
   CALL do_setup()
+  !
+  kpt_pool = idistribute()
+  CALL kpt_pool%init(nkstot,'p','nkstot',.FALSE.,IDIST_BLK)
+  IF(kpt_pool%nloc /= nks) CALL errore('wbse_setup','unexpected kpt_pool init error',1)
+  IF(npool > nkstot) CALL errore('wbse_setup','npool>nkstot',1)
+  !
+  IF(l_spin_flip .AND. nspin /= 2) CALL errore('wbse_setup','spin flip but nspin/=2',1)
   !
   SELECT CASE(localization)
   CASE('N','n')
@@ -140,11 +148,6 @@ SUBROUTINE wbse_setup()
   IF(l_spin_flip .AND. l_spin_flip_kernel) CALL wbse_sf_kernel_setup()
   !
   CALL my_mkdir(wbse_save_dir)
-  !
-  kpt_pool = idistribute()
-  CALL kpt_pool%init(nkstot,'p','nkstot',.FALSE.,IDIST_BLK)
-  !
-  IF(kpt_pool%nloc /= nks) CALL errore('wbse_init_setup','unexpected kpt_pool init error',1)
   !
   IF(l_qp_correction) CALL read_qp_eigs()
   !

@@ -92,21 +92,19 @@ SUBROUTINE wbse_davidson_diago ( )
   !
   ! ... DISTRIBUTE nvecx
   !
-  IF(nimage > nvecx) CALL errore('chidiago','nimage>nvecx',1)
-  !
   pert = idistribute()
   CALL pert%init(nvecx,'i','nvecx',.TRUE.)
+  IF(nimage > nvecx) CALL errore('chidiago','nimage>nvecx',1)
   !
   ! ... DISTRIBUTE nbndval
   !
-  IF(nbgrp > nbndval0x-n_trunc_bands) CALL errore('chidiago','nbgrp>nbndval',1)
-  !
   band_group = idistribute()
   CALL band_group%init(nbndval0x-n_trunc_bands,'b','nbndval',.TRUE.,IDIST_BLK)
+  IF(nbgrp > nbndval0x-n_trunc_bands) CALL errore('chidiago','nbgrp>nbndval',1)
   !
   CALL init_gather_bands()
   !
-  CALL wbse_memory_report() ! Before allocating I report the memory required.
+  CALL wbse_memory_report()
   !
 #if defined(__CUDA)
   CALL allocate_gpu()
