@@ -14,7 +14,7 @@
 SUBROUTINE wfreq_setup
   !-----------------------------------------------------------------------
   !
-  USE mp_global,              ONLY : inter_image_comm,my_image_id,inter_pool_comm,intra_bgrp_comm,nbgrp
+  USE mp_global,              ONLY : inter_image_comm,my_image_id,inter_pool_comm,npool,intra_bgrp_comm,nbgrp
   USE mp,                     ONLY : mp_bcast,mp_sum
   USE westcom,                ONLY : lrwfc,iuwfc,wfreq_save_dir,wfreq_calculation,nbnd_occ,occupation,&
                                    & qp_bands,n_bands,alphapv_dfpt,n_imfreq,n_refreq,n_pdep_eigen_to_use,&
@@ -67,21 +67,24 @@ SUBROUTINE wfreq_setup
   CALL pert%init(n_pdep_eigen_to_use,'i','npdep',.TRUE.)
   macropert = idistribute()
   CALL macropert%init(n_pdep_eigen_to_use+3,'i','npdep+macro',.TRUE.)
+  aband = idistribute()
+  CALL aband%init(nbnd,'i','nbnd',.TRUE.)
+  !
+  kpt_pool = idistribute()
+  CALL kpt_pool%init(nkstot,'p','nkstot',.FALSE.,IDIST_BLK)
+  IF(kpt_pool%nloc /= nks) CALL errore('wfreq_setup','unexpected kpt_pool init error',1)
+  IF(npool > nkstot) CALL errore('wfreq_setup','npool>nkstot',1)
+  !
+  occband = idistribute()
+  band_group = idistribute()
+  !
+  IF(nbgrp > n_bands) CALL errore('wfreq_setup','nbgrp>nbnd_qp',1)
+  IF(nbgrp > MINVAL(nbnd_occ)) CALL errore('wfreq_setup','nbgrp>nbnd_occ',1)
+  !
   ifr = idistribute()
   CALL ifr%init(n_imfreq,'z','n_imfreq',.TRUE.)
   rfr = idistribute()
   CALL rfr%init(n_refreq,'z','n_refreq',.TRUE.)
-  aband = idistribute()
-  CALL aband%init(nbnd,'i','nbnd',.TRUE.)
-  occband = idistribute()
-  band_group = idistribute()
-  !
-  kpt_pool = idistribute()
-  CALL kpt_pool%init(nkstot,'p','nkstot',.FALSE.,IDIST_BLK)
-  !
-  IF(kpt_pool%nloc /= nks) CALL errore('wfreq_setup','unexpected kpt_pool init error',1)
-  IF(nbgrp > n_bands) CALL errore('wfreq_setup','nbgrp>nbnd_qp',1)
-  IF(nbgrp > MINVAL(nbnd_occ)) CALL errore('wfreq_setup','nbgrp>nbnd_occ',1)
   !
   CALL set_freqlists()
   !

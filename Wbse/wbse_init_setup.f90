@@ -78,7 +78,7 @@ SUBROUTINE wbse_init_setup()
   !
   kpt_pool = idistribute()
   CALL kpt_pool%init(nkstot,'p','nkstot',.FALSE.,IDIST_BLK)
-  !
   IF(kpt_pool%nloc /= nks) CALL errore('wbse_init_setup','unexpected kpt_pool init error',1)
+  IF(npool > nkstot) CALL errore('wbse_init_setup','npool>nkstot',1)
   !
 END SUBROUTINE

@@ -331,8 +331,8 @@ MODULE dfpt_module
                !
                ! Compute <psi_j| dV |psi_i>
                !
-               CALL glbrak_gamma(evc(1,nbndval_full+1),dvpsi,psi_dvpsi,npw,npwx,nbndval_frac,&
-               & band_group%nloc,nbndval_frac,npol)
+               CALL glbrak_gamma(evc(:,nbndval_full+1:nbndval_full+nbndval_frac),dvpsi,psi_dvpsi,&
+               & npw,npwx,nbndval_frac,band_group%nloc,nbndval_frac,npol)
                !$acc update host(psi_dvpsi)
                !
                CALL mp_sum(psi_dvpsi,intra_bgrp_comm)
