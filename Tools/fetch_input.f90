@@ -47,7 +47,8 @@ SUBROUTINE fetch_input_yml(num_drivers, driver, verbose)
   USE gvect,            ONLY : ecutrho
   USE start_k,          ONLY : nk1,nk2,nk3
   USE control_flags,    ONLY : gamma_only
-  USE pwcom,            ONLY : nelec,nbnd,nspin
+  USE pwcom,            ONLY : nelec,nbnd
+  USE noncollin_module, ONLY : nspin_lsda
   !
   IMPLICIT NONE
   !
@@ -170,7 +171,7 @@ SUBROUTINE fetch_input_yml(num_drivers, driver, verbose)
         IERR = dict_create(kwargs)
         IERR = kwargs%setitem('nelec', nelec)
         IERR = kwargs%setitem('ecutrho', ecutrho)
-        IERR = kwargs%setitem('nspin', nspin)
+        IERR = kwargs%setitem('nspin', nspin_lsda)
         !
         IERR = call_py(return_obj, pymod, 'read_keyword_from_file', args, kwargs)
         IERR = cast(return_dict, return_obj)
@@ -193,11 +194,11 @@ SUBROUTINE fetch_input_yml(num_drivers, driver, verbose)
         IERR = cast(tmp_list2,tmp_obj2)
         IERR = tmp_list2%len(list_len)
         IF(ALLOCATED(qp_bands)) DEALLOCATE(qp_bands)
-        ALLOCATE(qp_bands(list_len,nspin))
+        ALLOCATE(qp_bands(list_len,nspin_lsda))
         DO i = 0, list_len-1 ! Python indices start at 0
            IERR = tmp_list2%getitem(qp_bands(i+1,1), i) ! Fortran indices start at 1
         ENDDO
-        IF(nspin == 2) THEN
+        IF(nspin_lsda == 2) THEN
            IERR = tmp_list%getitem(tmp_obj2, 1)
            IERR = cast(tmp_list2,tmp_obj2)
            DO i = 0, list_len-1 ! Python indices start at 0
@@ -476,7 +477,7 @@ SUBROUTINE fetch_input_yml(num_drivers, driver, verbose)
      CALL mp_bcast(n_qp_bands,root,world_comm)
      IF(mpime /= root) THEN
         IF(ALLOCATED(qp_bands)) DEALLOCATE(qp_bands)
-        ALLOCATE(qp_bands(n_qp_bands,nspin))
+        ALLOCATE(qp_bands(n_qp_bands,nspin_lsda))
      ENDIF
      CALL mp_bcast(qp_bands,root,world_comm)
      CALL mp_bcast(macropol_calculation,root,world_comm)
