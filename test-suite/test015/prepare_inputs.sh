@@ -18,8 +18,9 @@ nat             = 5
 ntyp            = 2
 ecutwfc         = 25
 nbnd            = 30
-assume_isolated = 'mp'
 input_dft       = 'pbe0'
+ecutfock        = 25
+assume_isolated = 'mp'
 /
 &electrons
 diago_full_acc = .true.
@@ -37,37 +38,30 @@ K_POINTS gamma
 EOF
 
 
-cat > wstat.in << EOF
+cat > wbse_init.in << EOF
 input_west:
   qe_prefix: test
   west_prefix: test
   outdir: ./
 
-wstat_control:
-  wstat_calculation: S
-  n_pdep_eigen: 30
-  l_minimize_exx_if_active: True
-  n_exx_lowrank: 0
+wbse_init_control:
+  wbse_init_calculation: S
+  solver: TDDFT
 EOF
 
 
-cat > wfreq.in << EOF
+cat > wbse.in << EOF
 input_west:
   qe_prefix: test
   west_prefix: test
   outdir: ./
 
-wstat_control:
-  wstat_calculation: S
-  n_pdep_eigen: 30
-  l_minimize_exx_if_active: True
-  n_exx_lowrank: 0
+wbse_init_control:
+  wbse_init_calculation: S
+  solver: TDDFT
 
-wfreq_control:
-  wfreq_calculation: XWGQ
-  macropol_calculation: N
-  n_pdep_eigen_to_use: 30
-  qp_bandrange: [1,5]
-  n_refreq: 300
-  ecut_refreq: 2.0
+wbse_control:
+  wbse_calculation: L
+  l_dipole_realspace: True
+  n_lanczos: 200
 EOF

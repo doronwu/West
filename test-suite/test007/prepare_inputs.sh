@@ -20,10 +20,11 @@ nbnd      = 16
 noinv     = .true.
 nosym     = .true.
 input_dft = 'pbe0'
+ecutfock  = 25
 /
 &electrons
+conv_thr       = 1.d-12
 diago_full_acc = .true.
-conv_thr       = 1.e-12
 /
 ATOMIC_SPECIES
 Si 28.085   Si_ONCV_PBE-1.2.upf
@@ -44,7 +45,6 @@ input_west:
 wstat_control:
   wstat_calculation: S
   n_pdep_eigen: 10
-  l_minimize_exx_if_active: True
   n_exx_lowrank: 30
 EOF
 
@@ -58,7 +58,6 @@ input_west:
 wstat_control:
   wstat_calculation: S
   n_pdep_eigen: 10
-  l_minimize_exx_if_active: True
   n_exx_lowrank: 30
 
 wfreq_control:

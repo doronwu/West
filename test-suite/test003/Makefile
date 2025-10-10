@@ -21,7 +21,7 @@ wfreq: wstat
 	$(PARA_PREFIX) $(BINDIR)/wfreq.x -nimage $(NIMAGE) -npool $(NPOOL) -nband $(NBAND) -i wfreq.in > wfreq.out 2> wfreq.err
 
 clean:
-	- /bin/rm -rf *out *err *in *xml *upf *tab *restart *save *wfc* CRASH > /dev/null 2>&1
+	- /bin/rm -rf *out *err *in *xml *upf *tab *restart *save *wfc* *mix* CRASH > /dev/null 2>&1
 
 title:
 	@echo

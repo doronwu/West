@@ -1,16 +1,16 @@
 {
   "runjob": {
-    "startdate": " 2Aug2025",
-    "starttime": "19:23: 5",
+    "startdate": "18Sep2025",
+    "starttime": "16: 3:26",
     "completed": true,
-    "endtime": "19:23:11",
-    "enddate": " 2Aug2025"
+    "endtime": "16: 3:33",
+    "enddate": "18Sep2025"
   },
   "software": {
     "package": "WEST",
     "program": "WFREQ",
     "version": "6.2.1",
-    "westgit": "",
+    "westgit": "4b6b89e",
     "website": "https://west-code.org",
     "citation": "M. Govoni et al., J. Chem. Theory Comput. 11, 2680 (2015).",
     "qeversion": "7.5"
@@ -1173,401 +1173,401 @@
   },
   "timing": {
     "WFREQ": {
-      "cpu:sec": 0.63001779999999998E+1,
-      "cpu:hum": "06.3s",
-      "wall:sec": 0.64776170253753662E+1,
-      "wall:hum": "06.4s",
+      "cpu:sec": 0.69803809999999995E+1,
+      "cpu:hum": "06.9s",
+      "wall:sec": 0.71432240009307861E+1,
+      "wall:hum": "07.1s",
       "nocalls": 2
     },
     "west_readin": {
-      "cpu:sec": 0.59187000000000003E-1,
+      "cpu:sec": 0.56878999999999985E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.62690019607543945E-1,
+      "wall:sec": 0.60914039611816406E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "fetch_input": {
-      "cpu:sec": 0.30560000000000032E-2,
+      "cpu:sec": 0.27770000000000294E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.44779777526855469E-2,
+      "wall:sec": 0.49598217010498047E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "fft": {
-      "cpu:sec": 0.33646999999999982E-1,
+      "cpu:sec": 0.33127999999999991E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.33991336822509766E-1,
+      "wall:sec": 0.3399968147277832E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 24
     },
     "fft_scatter": {
-      "cpu:sec": 0.72999899999999762E+0,
+      "cpu:sec": 0.78834399999985827E+0,
       "cpu:hum": "00.7s",
-      "wall:sec": 0.75388717651367188E+0,
-      "wall:hum": "00.7s",
+      "wall:sec": 0.8097069263458252E+0,
+      "wall:hum": "00.8s",
       "nocalls": 87860
     },
     "init_vloc": {
-      "cpu:sec": 0.13970000000000093E-2,
+      "cpu:sec": 0.13950000000000073E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.14479160308837891E-2,
+      "wall:sec": 0.14119148254394531E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "init_us_1": {
-      "cpu:sec": 0.28000000000000247E-4,
+      "cpu:sec": 0.17500000000000848E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.19502639770507812E-3,
+      "wall:sec": 0.20384788513183594E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "v_of_rho": {
-      "cpu:sec": 0.29599999999999904E-2,
+      "cpu:sec": 0.22699999999999804E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.29709339141845703E-2,
+      "wall:sec": 0.28691291809082031E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "v_xc": {
-      "cpu:sec": 0.54329999999999934E-2,
+      "cpu:sec": 0.38050000000000028E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.54481029510498047E-2,
+      "wall:sec": 0.52893161773681641E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "v_h": {
-      "cpu:sec": 0.7499999999999174E-4,
+      "cpu:sec": 0.0E+0,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.76055526733398438E-4,
+      "wall:sec": 0.79870223999023438E-4,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "do_setup": {
-      "cpu:sec": 0.17780000000000018E-2,
+      "cpu:sec": 0.27380000000000182E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.28650760650634766E-2,
+      "wall:sec": 0.28541088104248047E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "init_pw_ar": {
-      "cpu:sec": 0.12480000000000269E-2,
+      "cpu:sec": 0.22000000000000075E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.23310184478759766E-2,
+      "wall:sec": 0.23140907287597656E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "hinit0": {
-      "cpu:sec": 0.17500000000000848E-3,
+      "cpu:sec": 0.17100000000000448E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.19788742065429688E-3,
+      "wall:sec": 0.19884109497070312E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "davcio": {
-      "cpu:sec": 0.1239999999995689E-3,
+      "cpu:sec": 0.18100000000131899E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.19431114196777344E-3,
+      "wall:sec": 0.18405914306640625E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 16
     },
     "qdet_db": {
-      "cpu:sec": 0.55190000000004957E-2,
+      "cpu:sec": 0.55540000000009471E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.55270195007324219E-2,
+      "wall:sec": 0.55871009826660156E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 3
     },
     "solve_hf": {
-      "cpu:sec": 0.50264000000000003E-1,
+      "cpu:sec": 0.49978000000000022E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.5138707160949707E-1,
+      "wall:sec": 0.51146030426025391E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "sigmavxc": {
-      "cpu:sec": 0.74599999999999667E-3,
+      "cpu:sec": 0.75000000000000067E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.74791908264160156E-3,
+      "wall:sec": 0.75292587280273438E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "fftw": {
-      "cpu:sec": 0.30910489999997575E+1,
-      "cpu:hum": "03.0s",
-      "wall:sec": 0.31793725490570068E+1,
+      "cpu:sec": 0.31185610000000201E+1,
+      "cpu:hum": "03.1s",
+      "wall:sec": 0.3194446325302124E+1,
       "wall:hum": "03.1s",
       "nocalls": 87158
     },
-    "sigmax": {
-      "cpu:sec": 0.50691000000000486E-1,
+    "sqvc_init": {
+      "cpu:sec": 0.17900000000015126E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.5181121826171875E-1,
+      "wall:sec": 0.17809867858886719E-3,
+      "wall:hum": "< 00.1s",
+      "nocalls": 7
+    },
+    "sigmax": {
+      "cpu:sec": 0.51038000000000139E-1,
+      "cpu:hum": "< 00.1s",
+      "wall:sec": 0.51199674606323242E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
-    "sqvc_init": {
-      "cpu:sec": 0.68099999999926553E-3,
-      "cpu:hum": "< 00.1s",
-      "wall:sec": 0.68449974060058594E-3,
-      "wall:hum": "< 00.1s",
-      "nocalls": 29
-    },
     "ffts": {
-      "cpu:sec": 0.36234999999996909E-1,
+      "cpu:sec": 0.37538999999999767E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.37602424621582031E-1,
+      "wall:sec": 0.37685155868530273E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 678
     },
     "write_hf": {
-      "cpu:sec": 0.30000000000002247E-4,
+      "cpu:sec": 0.26999999999999247E-4,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.30040740966796875E-4,
+      "wall:sec": 0.26941299438476562E-4,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "wlanczos": {
-      "cpu:sec": 0.56152999999999995E+1,
-      "cpu:hum": "05.6s",
-      "wall:sec": 0.57611129283905029E+1,
-      "wall:hum": "05.7s",
+      "cpu:sec": 0.62377119999999993E+1,
+      "cpu:hum": "06.2s",
+      "wall:sec": 0.63799293041229248E+1,
+      "wall:hum": "06.3s",
       "nocalls": 2
     },
     "pdep_read": {
-      "cpu:sec": 0.36399999999963129E-2,
+      "cpu:sec": 0.35749999999934445E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.36966800689697266E-2,
+      "wall:sec": 0.359344482421875E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 150
     },
     "init_us_2": {
-      "cpu:sec": 0.2479999999991378E-3,
+      "cpu:sec": 0.24699999999899802E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.24938583374023438E-3,
+      "wall:sec": 0.24747848510742188E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 6
     },
     "linHx": {
-      "cpu:sec": 0.57831500000000258E+0,
-      "cpu:hum": "00.5s",
-      "wall:sec": 0.6030738353729248E+0,
+      "cpu:sec": 0.62825000000000131E+0,
+      "cpu:hum": "00.6s",
+      "wall:sec": 0.65202593803405762E+0,
       "wall:hum": "00.6s",
       "nocalls": 124
     },
     "commut_Hx_ps": {
-      "cpu:sec": 0.58084000000000913E-1,
+      "cpu:sec": 0.55788000000005056E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.59685945510864258E-1,
+      "wall:sec": 0.56798934936523438E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 372
     },
     "calbec": {
-      "cpu:sec": 0.65502800000000239E+0,
-      "cpu:hum": "00.6s",
-      "wall:sec": 0.67575573921203613E+0,
-      "wall:hum": "00.6s",
+      "cpu:sec": 0.82474400000002657E+0,
+      "cpu:hum": "00.8s",
+      "wall:sec": 0.85081601142883301E+0,
+      "wall:hum": "00.8s",
       "nocalls": 4954
     },
     "alphapc": {
-      "cpu:sec": 0.42333900000001723E+0,
-      "cpu:hum": "00.4s",
-      "wall:sec": 0.43045520782470703E+0,
-      "wall:hum": "00.4s",
+      "cpu:sec": 0.55484699999998455E+0,
+      "cpu:hum": "00.5s",
+      "wall:sec": 0.56010961532592773E+0,
+      "wall:hum": "00.5s",
       "nocalls": 2368
     },
     "linstern": {
-      "cpu:sec": 0.51661900000000394E+0,
+      "cpu:sec": 0.56858099999999734E+0,
       "cpu:hum": "00.5s",
-      "wall:sec": 0.53965377807617188E+0,
+      "wall:sec": 0.59128546714782715E+0,
       "wall:hum": "00.5s",
       "nocalls": 124
     },
     "stern": {
-      "cpu:sec": 0.49791899999999156E+0,
-      "cpu:hum": "00.4s",
-      "wall:sec": 0.52006030082702637E+0,
+      "cpu:sec": 0.5480129999999912E+0,
+      "cpu:hum": "00.5s",
+      "wall:sec": 0.56982564926147461E+0,
       "wall:hum": "00.5s",
       "nocalls": 2170
     },
     "h_psi": {
-      "cpu:sec": 0.43106249999999919E+1,
-      "cpu:hum": "04.3s",
-      "wall:sec": 0.44288129806518555E+1,
-      "wall:hum": "04.4s",
+      "cpu:sec": 0.47491069999999675E+1,
+      "cpu:hum": "04.7s",
+      "wall:sec": 0.48675441741943359E+1,
+      "wall:hum": "04.8s",
       "nocalls": 4210
     },
     "h_psi:pot": {
-      "cpu:sec": 0.43034430000000228E+1,
-      "cpu:hum": "04.3s",
-      "wall:sec": 0.44216771125793457E+1,
-      "wall:hum": "04.4s",
+      "cpu:sec": 0.47404810000000097E+1,
+      "cpu:hum": "04.7s",
+      "wall:sec": 0.48593394756317139E+1,
+      "wall:hum": "04.8s",
       "nocalls": 4210
     },
     "vloc_psi": {
-      "cpu:sec": 0.30462819999999882E+1,
+      "cpu:sec": 0.30676160000000046E+1,
       "cpu:hum": "03.0s",
-      "wall:sec": 0.31295390129089355E+1,
+      "wall:sec": 0.31425225734710693E+1,
       "wall:hum": "03.1s",
       "nocalls": 4210
     },
     "h_psi:calbec": {
-      "cpu:sec": 0.6440740000000007E+0,
-      "cpu:hum": "00.6s",
-      "wall:sec": 0.66416192054748535E+0,
-      "wall:hum": "00.6s",
+      "cpu:sec": 0.81490300000000904E+0,
+      "cpu:hum": "00.8s",
+      "wall:sec": 0.84057188034057617E+0,
+      "wall:hum": "00.8s",
       "nocalls": 4210
     },
     "add_vuspsi": {
-      "cpu:sec": 0.60689199999998333E+0,
-      "cpu:hum": "00.6s",
-      "wall:sec": 0.62200212478637695E+0,
-      "wall:hum": "00.6s",
+      "cpu:sec": 0.8517000000000019E+0,
+      "cpu:hum": "00.8s",
+      "wall:sec": 0.86982297897338867E+0,
+      "wall:hum": "00.8s",
       "nocalls": 4210
     },
     "alphapv": {
-      "cpu:sec": 0.37351000000002799E-1,
+      "cpu:sec": 0.46365000000009537E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.39162397384643555E-1,
+      "wall:sec": 0.48322439193725586E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 2170
     },
     "lan_H": {
-      "cpu:sec": 0.45032319999999961E+1,
-      "cpu:hum": "04.5s",
-      "wall:sec": 0.46097087860107422E+1,
-      "wall:hum": "04.6s",
+      "cpu:sec": 0.50628499999999947E+1,
+      "cpu:hum": "05.0s",
+      "wall:sec": 0.5166867733001709E+1,
+      "wall:hum": "05.1s",
       "nocalls": 68
     },
     "brak": {
-      "cpu:sec": 0.16757699999999875E+0,
-      "cpu:hum": "00.1s",
-      "wall:sec": 0.17465400695800781E+0,
-      "wall:hum": "00.1s",
+      "cpu:sec": 0.21519500000000402E+0,
+      "cpu:hum": "00.2s",
+      "wall:sec": 0.21841120719909668E+0,
+      "wall:hum": "00.2s",
       "nocalls": 74
     },
     "write_w": {
-      "cpu:sec": 0.5138000000000531E-2,
+      "cpu:sec": 0.26549999999998519E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.71408748626708984E-2,
+      "wall:sec": 0.66430568695068359E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "chi_invert": {
-      "cpu:sec": 0.95369999999999067E-2,
+      "cpu:sec": 0.95469999999995281E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.95570087432861328E-2,
+      "wall:sec": 0.95686912536621094E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "read_w": {
-      "cpu:sec": 0.30960000000002097E-2,
+      "cpu:sec": 0.32709999999998018E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.51069259643554688E-2,
+      "wall:sec": 0.52838325500488281E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "alphapa": {
-      "cpu:sec": 0.12160000000003279E-2,
+      "cpu:sec": 0.14059999999993522E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.12660026550292969E-2,
+      "wall:sec": 0.15180110931396484E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 64
     },
     "glanczos": {
-      "cpu:sec": 0.4551469999999993E+0,
-      "cpu:hum": "00.4s",
-      "wall:sec": 0.47576689720153809E+0,
-      "wall:hum": "00.4s",
+      "cpu:sec": 0.51186299999999996E+0,
+      "cpu:hum": "00.5s",
+      "wall:sec": 0.5248100757598877E+0,
+      "wall:hum": "00.5s",
       "nocalls": 1
     },
     "write_over": {
-      "cpu:sec": 0.18800000000052108E-3,
+      "cpu:sec": 0.21199999999943486E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.18858909606933594E-3,
+      "wall:sec": 0.213623046875E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 6
     },
     "write_g": {
-      "cpu:sec": 0.52259999999995088E-2,
+      "cpu:sec": 0.75449999999994688E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.12222051620483398E-1,
+      "wall:sec": 0.12537956237792969E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "solve_qp": {
-      "cpu:sec": 0.58497000000000021E-1,
+      "cpu:sec": 0.59280999999999473E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.5964970588684082E-1,
+      "wall:sec": 0.59430837631225586E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "coll_gw": {
-      "cpu:sec": 0.16106999999999871E-1,
+      "cpu:sec": 0.15920000000000378E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.16144990921020508E-1,
+      "wall:sec": 0.15966892242431641E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "read_over": {
-      "cpu:sec": 0.43000000000059657E-3,
+      "cpu:sec": 0.39899999999981617E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.43249130249023438E-3,
+      "wall:sec": 0.40578842163085938E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 36
     },
     "read_hf": {
-      "cpu:sec": 0.21000000000270802E-4,
+      "cpu:sec": 0.18999999999991246E-4,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.19073486328125E-4,
+      "wall:sec": 0.18835067749023438E-4,
       "wall:hum": "< 00.1s",
       "nocalls": 2
     },
     "sigmac_i": {
-      "cpu:sec": 0.26474999999999582E-1,
+      "cpu:sec": 0.26613000000001996E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.26551723480224609E-1,
+      "wall:sec": 0.2667546272277832E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 13
     },
     "sigmac_r": {
-      "cpu:sec": 0.1254999999999562E-2,
+      "cpu:sec": 0.12750000000032458E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.12614727020263672E-2,
+      "wall:sec": 0.12791156768798828E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 13
     },
     "wfreq_db": {
-      "cpu:sec": 0.19039999999996837E-2,
+      "cpu:sec": 0.18670000000007292E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.19099712371826172E-2,
+      "wall:sec": 0.18699169158935547E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "eri_brak": {
-      "cpu:sec": 0.27389999999999581E-1,
+      "cpu:sec": 0.28444999999999609E-1,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.28452873229980469E-1,
+      "wall:sec": 0.28492927551269531E-1,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "Wp": {
-      "cpu:sec": 0.20199999999981344E-3,
+      "cpu:sec": 0.20299999999995322E-3,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.20289421081542969E-3,
+      "wall:sec": 0.20194053649902344E-3,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "eri_vc_s1s1": {
-      "cpu:sec": 0.40350000000000108E-2,
+      "cpu:sec": 0.40250000000003894E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.40471553802490234E-2,
+      "wall:sec": 0.40311813354492188E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     },
     "eri_vc_s1s2": {
-      "cpu:sec": 0.3007000000000204E-2,
+      "cpu:sec": 0.39929999999994692E-2,
       "cpu:hum": "< 00.1s",
-      "wall:sec": 0.40130615234375E-2,
+      "wall:sec": 0.40020942687988281E-2,
       "wall:hum": "< 00.1s",
       "nocalls": 1
     }

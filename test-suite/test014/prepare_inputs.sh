@@ -13,14 +13,13 @@ prefix       = 'test'
 /
 &system
 ibrav             = 0
-nat               = 15
 ntyp              = 2
-ecutwfc           = 25
-nosym             = .true.
+nat               = 15
 tot_charge        = -1
 nspin             = 2
-nbnd              = 40
 tot_magnetization = 2
+ecutwfc           = 25
+nbnd              = 40
 /
 &electrons
 diago_full_acc = .true.

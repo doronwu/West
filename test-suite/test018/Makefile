@@ -18,10 +18,10 @@ wbse_init: pw
 	$(PARA_PREFIX) $(BINDIR)/wbse_init.x -nimage $(NIMAGE) -nband $(NBAND) -i wbse_init.in > wbse_init.out 2> wbse_init.err
 
 wbse: wbse_init
-	$(PARA_PREFIX) $(BINDIR)/wbse.x -nband $(NBAND) -i wbse.in > wbse.out 2> wbse.err
+	$(PARA_PREFIX) $(BINDIR)/wbse.x -nimage $(NIMAGE) -nband $(NBAND) -i wbse.in > wbse.out 2> wbse.err
 
 clean:
-	- /bin/rm -rf *out *err *in *xml *upf *tab *restart *save *wfc* CRASH > /dev/null 2>&1
+	- /bin/rm -rf *out *err *in *xml *upf *tab *restart *save *wfc* *mix* CRASH > /dev/null 2>&1
 
 title:
 	@echo
@@ -32,5 +32,5 @@ title:
 
 description:
 	@echo
-	@echo "SiH4 molecule gamma_only TDDFT (PBE0) Lanczos"
+	@echo "Formaldehyde molecule gamma_only TDDFT (PBE0) forces"
 	@echo

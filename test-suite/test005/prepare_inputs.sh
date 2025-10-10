@@ -59,7 +59,7 @@ wstat_control:
   n_pdep_eigen: 50
 
 westpp_control:
-  westpp_calculation: E
+  westpp_calculation: RWE
   westpp_n_pdep_eigen_to_use: 10
   westpp_range: [1,2]
   westpp_format: C
