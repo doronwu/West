@@ -21,8 +21,8 @@ noinv   = .true.
 nosym   = .true.
 /
 &electrons
+conv_thr       = 1.d-12
 diago_full_acc = .true.
-conv_thr       = 1.e-12
 /
 ATOMIC_SPECIES
 Si 28.085   Si_ONCV_PBE-1.2.upf

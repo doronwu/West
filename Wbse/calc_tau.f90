@@ -18,7 +18,7 @@ SUBROUTINE calc_tau()
   USE pwcom,                ONLY : isk,npw,ngk
   USE wavefunctions,        ONLY : evc
   USE westcom,              ONLY : lrwfc,iuwfc,ev,dvg,n_pdep_eigen_to_use,npwqx,nbnd_occ,l_pdep,&
-                                 & spin_channel,l_bse
+                                 & spin_channel,l_bse,l_hybrid_tddft
   USE lsda_mod,             ONLY : nspin
   USE pdep_db,              ONLY : pdep_db_read
   USE mp,                   ONLY : mp_bcast
@@ -27,6 +27,8 @@ SUBROUTINE calc_tau()
   USE class_idistribute,    ONLY : idistribute
   USE distribution_center,  ONLY : pert,kpt_pool
   USE qbox_interface,       ONLY : init_qbox,finalize_qbox
+  USE types_coulomb,        ONLY : pot3D_x,pot3D_c
+  USE exx_base,             ONLY : erfc_scrlen
 #if defined(__CUDA)
   USE west_gpu,             ONLY : allocate_gpu,deallocate_gpu
 #endif
@@ -61,6 +63,37 @@ SUBROUTINE calc_tau()
   !
   spin_resolve = spin_channel > 0 .AND. nspin > 1
   !
+  IF(l_hybrid_tddft) THEN
+     !
+     IF(erfc_scrlen > 0._DP) THEN
+        !
+        ! HSE functional, mya = 1._DP, myb = -1._DP, mymu = erfc_scrlen
+        !
+        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=-1._DP,mymu=erfc_scrlen)
+        !
+     ELSE
+        !
+        ! PBE0 functional, mya = 1._DP, myb = 0._DP, mymu = 1._DP to avoid divergence
+        !
+        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=0._DP,mymu=1._DP)
+        !
+     ENDIF
+     !
+     !$acc enter data copyin(pot3D_x)
+     !$acc enter data copyin(pot3D_x%sqvc)
+     !
+  ELSE
+     !
+     CALL pot3D_x%init('Rho',.FALSE.,'gb')
+     CALL pot3D_c%init('Wave',.FALSE.,'default')
+     !
+     !$acc enter data copyin(pot3D_x)
+     !$acc enter data copyin(pot3D_x%sqvc)
+     !$acc enter data copyin(pot3D_c)
+     !$acc enter data copyin(pot3D_c%sqvc)
+     !
+  ENDIF
+  !
   DO iks = 1,kpt_pool%nloc
      !
      current_spin = isk(iks)
@@ -88,6 +121,13 @@ SUBROUTINE calc_tau()
      ENDIF
   ENDIF
   !
+  !$acc exit data delete(pot3D_x%sqvc)
+  !$acc exit data delete(pot3D_x)
+  IF(.NOT. l_hybrid_tddft) THEN
+     !$acc exit data delete(pot3D_c%sqvc)
+     !$acc exit data delete(pot3D_c)
+  ENDIF
+  !
 #if defined(__CUDA)
   CALL deallocate_gpu()
 #endif
@@ -104,12 +144,10 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   USE kinds,                ONLY : DP
   USE cell_base,            ONLY : omega
   USE io_push,              ONLY : io_push_title
-  USE class_coulomb,        ONLY : coulomb
-  USE westcom,              ONLY : ev,dvg,wbse_init_calculation,wbse_init_save_dir,l_hybrid_tddft,&
-                                 & l_bse,l_pdep,chi_kernel,l_local_repr,overlap_thr,n_trunc_bands
+  USE westcom,              ONLY : ev,dvg,wbse_init_calculation,wbse_init_save_dir,l_bse,l_pdep,&
+                                 & chi_kernel,l_local_repr,overlap_thr,n_trunc_bands
   USE fft_base,             ONLY : dffts
   USE noncollin_module,     ONLY : npol
-  USE exx_base,             ONLY : erfc_scrlen
   USE pwcom,                ONLY : npw,npwx,lsda
   USE pdep_io,              ONLY : pdep_merge_and_write_G
   USE class_idistribute,    ONLY : idistribute
@@ -122,6 +160,7 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
                                  & intra_bgrp_comm,me_bgrp
   USE conversions,          ONLY : itoa
   USE qbox_interface,       ONLY : sleep_and_wait_for_lock_to_be_removed
+  USE types_coulomb,        ONLY : pot3D_x,pot3D_c
   USE bar,                  ONLY : bar_type,start_bar_type,update_bar_type,stop_bar_type
   USE wbse_dv,              ONLY : wbse_dv_setup,wbse_dv_of_drho
   USE distribution_center,  ONLY : pert
@@ -159,8 +198,6 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   !
   LOGICAL :: l_xcchi,l_skip,l_restart
   !
-  TYPE(coulomb) :: pot3D_x
-  TYPE(coulomb) :: pot3D_c
   TYPE(bar_type) :: barra
   !
   SELECT CASE(wbse_init_calculation)
@@ -171,37 +208,6 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   CASE DEFAULT
      CALL errore('calc_tau','invalid wbse_init_calculation',1)
   END SELECT
-  !
-  IF(l_hybrid_tddft) THEN
-     !
-     IF(erfc_scrlen > 0._DP) THEN
-        !
-        ! HSE functional, mya = 1._DP, myb = -1._DP, mymu = erfc_scrlen
-        !
-        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=-1._DP,mymu=erfc_scrlen)
-        !
-     ELSE
-        !
-        ! PBE0 functional, mya = 1._DP, myb = 0._DP, mymu = 1._DP to avoid divergence
-        !
-        CALL pot3D_x%init('Rho',.FALSE.,'gb',mya=1._DP,myb=0._DP,mymu=1._DP)
-        !
-     ENDIF
-     !
-     !$acc enter data copyin(pot3D_x)
-     !$acc enter data copyin(pot3D_x%sqvc)
-     !
-  ELSE
-     !
-     CALL pot3D_x%init('Rho',.FALSE.,'gb')
-     CALL pot3D_c%init('Wave',.FALSE.,'default')
-     !
-     !$acc enter data copyin(pot3D_x)
-     !$acc enter data copyin(pot3D_x%sqvc)
-     !$acc enter data copyin(pot3D_c)
-     !$acc enter data copyin(pot3D_c%sqvc)
-     !
-  ENDIF
   !
   IF(.NOT. l_pdep) THEN
      !
@@ -516,13 +522,6 @@ SUBROUTINE calc_tau_single_q(current_spin,nbndval)
   ENDDO
   !
   CALL stop_bar_type(barra,'tau')
-  !
-  !$acc exit data delete(pot3D_x%sqvc)
-  !$acc exit data delete(pot3D_x)
-  IF(.NOT. l_hybrid_tddft) THEN
-     !$acc exit data delete(pot3D_c%sqvc)
-     !$acc exit data delete(pot3D_c)
-  ENDIF
   !
   !$acc exit data delete(dvg,tau,aux_r,aux1_g)
   DEALLOCATE(tau)

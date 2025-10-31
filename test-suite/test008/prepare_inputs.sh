@@ -19,6 +19,7 @@ ecutwfc = 20
 nbnd    = 80
 /
 &electrons
+diago_full_acc = .true.
 /
 ATOMIC_SPECIES
 Mg 24.3050  Mg_ONCV_PBE-1.2.upf

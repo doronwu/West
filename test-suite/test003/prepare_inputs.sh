@@ -17,10 +17,10 @@ celldm(1)         = 20
 nat               = 5
 ntyp              = 2
 nspin             = 2
+tot_magnetization = 0
 ecutwfc           = 25
 nbnd              = 10
 assume_isolated   = 'mp'
-tot_magnetization = 0
 /
 &electrons
 diago_full_acc = .true.

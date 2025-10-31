@@ -18,8 +18,9 @@ nat             = 5
 ntyp            = 2
 ecutwfc         = 25
 nbnd            = 30
-assume_isolated = 'mp'
 input_dft       = 'pbe0'
+ecutfock        = 25
+assume_isolated = 'mp'
 /
 &electrons
 diago_full_acc = .true.
@@ -46,7 +47,6 @@ input_west:
 wstat_control:
   wstat_calculation: S
   n_pdep_eigen: 30
-  l_minimize_exx_if_active: True
 EOF
 
 
@@ -59,7 +59,6 @@ input_west:
 wstat_control:
   wstat_calculation: S
   n_pdep_eigen: 30
-  l_minimize_exx_if_active: True
 
 wfreq_control:
   wfreq_calculation: XWGQ

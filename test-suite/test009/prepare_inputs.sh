@@ -13,12 +13,12 @@ prefix       = 'test'
 &system
 ibrav           = 1
 celldm(1)       = 20
-nat             = 2
 ntyp            = 1
+nat             = 2
 ecutwfc         = 25
 nbnd            = 12
-assume_isolated = 'mp'
 occupations     = 'from_input'
+assume_isolated = 'mp'
 /
 &electrons
 diago_full_acc = .true.
