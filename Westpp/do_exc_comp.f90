@@ -138,7 +138,7 @@ SUBROUTINE do_exc_comp()
         current_k = iks
         npw = ngk(iks)
         !
-        ! ... read in wavefunctions from the previous iteration
+        ! ... read GS wavefunctions
         !
         IF(k_grid%nps > 1) THEN
            IF(my_image_id == 0) CALL get_buffer(evc,lrwfc,iuwfc,iks)
@@ -246,7 +246,7 @@ SUBROUTINE do_exc_comp()
   DO iexc = westpp_range(1),westpp_range(2)
      !
      WRITE(stdout, "(/, 5x, '#     Exciton :   ', i8,' |','   ','Excitation energy :   ', f12.6)") iexc, ev(iexc)
-     WRITE(stdout, "(   5x, '#     Transition_from      |   Transition_to       |    Coeffcient')")
+     WRITE(stdout, "(   5x, '#     Transition_from      |   Transition_to       |    Coefficient')")
      !
      DO iks = 1,nks
         !
