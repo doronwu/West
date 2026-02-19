@@ -8,7 +8,7 @@ Perlmutter is an HPE Cray EX supercomputer located at National Energy Research S
 
 .. code-block:: bash
 
-   $ ssh <username>@saul-p1.nersc.gov
+   $ ssh <username>@perlmutter.nersc.gov  # or ssh <username>@saul.nersc.gov
 
 Building WEST (GPU)
 ~~~~~~~~~~~~~~~~~~~
@@ -175,4 +175,4 @@ Job submission is done with the following:
    $ sbatch run_west.sh
 
 .. seealso::
-   For more information, visit the `NERSC user guide <https://docs.nersc.gov/systems/perlmutter/>`_.
+   For more information, visit the `NERSC user guide <https://docs.nersc.gov/systems/perlmutter/architecture/>`_.
