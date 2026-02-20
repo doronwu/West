@@ -13,7 +13,7 @@ Perlmutter is an HPE Cray EX supercomputer located at National Energy Research S
 Building WEST (GPU)
 ~~~~~~~~~~~~~~~~~~~
 
-WEST executables can be compiled using the following script (tested on April 28, 2025):
+WEST executables can be compiled using the following script (tested on February 20, 2026):
 
 .. code-block:: bash
 
@@ -23,12 +23,12 @@ WEST executables can be compiled using the following script (tested on April 28,
    module unload darshan
    module load gpu
    module load PrgEnv-nvidia
-   module load nvidia/24.5
-   module load cudatoolkit/12.4
+   module load nvidia/25.5
+   module load cudatoolkit/12.9
    module load craype-accel-nvidia80
    module load cray-python/3.11.7
 
-   ./configure --with-cuda=$CUDA_HOME --with-cuda-runtime=12.4 --with-cuda-cc=80 --with-cuda-mpi=yes
+   ./configure --with-cuda=$CUDA_HOME --with-cuda-runtime=12.9 --with-cuda-cc=80 --with-cuda-mpi=yes
 
    # Manually edit make.inc:
 
@@ -77,8 +77,8 @@ The following is an example executable script `run_west.sh` to run the `wstat.x`
    module unload darshan
    module load gpu
    module load PrgEnv-nvidia
-   module load nvidia/24.5
-   module load cudatoolkit/12.4
+   module load nvidia/25.5
+   module load cudatoolkit/12.9
    module load craype-accel-nvidia80
    module load cray-python/3.11.7
 
@@ -98,7 +98,7 @@ Job submission is done with the following:
 Building WEST (CPU)
 ~~~~~~~~~~~~~~~~~~~
 
-WEST executables can be compiled using the following script (tested on April 28, 2025):
+WEST executables can be compiled using the following script (tested on February 20, 2026):
 
 .. code-block:: bash
 
@@ -107,7 +107,7 @@ WEST executables can be compiled using the following script (tested on April 28,
 
    module unload darshan
    module load cpu
-   module load cray-fftw/3.3.10.8
+   module load cray-fftw/3.3.10.11
    module load cray-python/3.11.7
 
    export MPIF90=ftn
@@ -119,7 +119,7 @@ WEST executables can be compiled using the following script (tested on April 28,
    # Manually edit make.inc:
 
    # DFLAGS = -D__FFTW3 -D__MPI -D__MPI_MODULE -D__SCALAPACK
-   # IFLAGS = -I. -I$(TOPDIR)/include -I/opt/cray/pe/fftw/3.3.10.8/x86_milan/include
+   # IFLAGS = -I. -I$(TOPDIR)/include -I/opt/cray/pe/fftw/3.3.10.11/x86_milan/include
    # BLAS_LIBS = # leave blank
    # LAPACK_LIBS = # leave blank
 
@@ -159,7 +159,7 @@ The following is an example executable script `run_west.sh` to run the `wstat.x`
 
    module unload darshan
    module load cpu
-   module load cray-fftw/3.3.10.8
+   module load cray-fftw/3.3.10.11
    module load cray-python/3.11.7
 
    export LD_LIBRARY_PATH=/opt/cray/pe/python/3.11.7/lib:$LD_LIBRARY_PATH
