@@ -102,7 +102,7 @@ SUBROUTINE do_exc_resp()
         npw = ngk(iks)
         nbndval = nbnd_occ(iks)
         !
-        ! ... read in wavefunctions from the previous iteration
+        ! ... read GS wavefunctions
         !
         IF(k_grid%nps > 1) THEN
            IF(my_image_id == 0) CALL get_buffer(evc,lrwfc,iuwfc,iks)
@@ -149,7 +149,7 @@ SUBROUTINE do_exc_resp()
            !
         ENDDO
         !
-        WRITE(fname,'(a,i6.6,a,i6.6)') TRIM(westpp_save_dir)//'/respK',1,'E',iexc
+        WRITE(fname,'(a,i6.6,a,i6.6)') TRIM(westpp_save_dir)//'/respK',iks,'E',iexc
         !$acc update host(rho)
         CALL dump_r(rho,TRIM(fname))
         !
