@@ -124,7 +124,8 @@ SUBROUTINE solve_eri(ifreq,l_isFreqReal)
   !
   ! 4-center integrals of W
   !
-  eri_w(:,:,:,:) = eri_vc + eri_w
+  ! eri_w(:,:,:,:) = eri_vc + eri_w
+  eri_w(:,:,:,:) = eri_vc !bare potential
   IF ( l_qdet_verbose ) eri_w_full(:,:,:,:) = eri_vc + eri_w_full
   !
   IF ( l_qdet_verbose ) THEN
